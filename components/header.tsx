@@ -25,13 +25,10 @@ export const Header = async () => {
   const currentRoom = userRooms[0]?.roomName;
 
   return (
-    <header>
-      <div className="max-w-3xl mx-auto p-4 flex items-center justify-between font-mono border-b-2 border-primary">
-        <Link href="/" className="flex flex-col gap-0 border-b">
-          <p className="font-serif text-2xl">SIRS </p>
-          <span className="text-xs uppercase text-muted-foreground">
-            RSUD Mamuju Tengah
-          </span>
+    <header className="p-4 sticky top-2">
+      <div className="max-w-5xl mx-auto py-2 flex items-center justify-between font-mono bg-white/40 backdrop-blur-2xl border rounded-full px-8">
+        <Link href="/">
+          <p className="font-serif text-xl">SIRS </p>
         </Link>
 
         <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">

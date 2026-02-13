@@ -47,9 +47,11 @@ export function NewReportForm({ rooms, templates, userId }: NewReportFormProps) 
   const [step, setStep] = useState<"select" | "form">("select");
   const [selectedRoom, setSelectedRoom] = useState("");
   const [selectedTemplate, setSelectedTemplate] = useState("");
-  const [selectedYear, setSelectedYear] = useState(() => new Date().getFullYear().toString());
-  const [selectedMonth, setSelectedMonth] = useState(() => (new Date().getMonth() + 1).toString());
-  const [selectedDay, setSelectedDay] = useState("");
+  // Auto-set to current date
+  const currentDate = new Date();
+  const selectedYear = currentDate.getFullYear().toString();
+  const selectedMonth = (currentDate.getMonth() + 1).toString();
+  const selectedDay = currentDate.getDate().toString();
   const [reportId, setReportId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -198,64 +200,16 @@ export function NewReportForm({ rooms, templates, userId }: NewReportFormProps) 
 
           <Card>
             <CardHeader>
-              <CardTitle>Select Period</CardTitle>
+              <CardTitle>Report Period</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Year</Label>
-                  <Select value={selectedYear} onValueChange={setSelectedYear}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {[2024, 2025, 2026].map((year) => (
-                        <SelectItem key={year} value={year.toString()}>
-                          {year}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Month</Label>
-                  <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {MONTHS.map((month, index) => (
-                        <SelectItem key={index + 1} value={(index + 1).toString()}>
-                          {month}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span className="font-medium">Period:</span>
+                <span>
+                  {MONTHS[parseInt(selectedMonth) - 1]} {selectedYear}
+                  {isDaily && selectedDay ? `, Day ${selectedDay}` : ""}
+                </span>
               </div>
-
-              {isDaily && (
-                <div className="space-y-2">
-                  <Label>Day (Optional for daily reports)</Label>
-                  <Select 
-                    value={selectedDay || "all"} 
-                    onValueChange={(v) => setSelectedDay(v === "all" ? "" : v)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select day" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Whole month</SelectItem>
-                      {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
-                        <SelectItem key={day} value={day.toString()}>
-                          {day}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
 
               <Button
                 className="w-full"
@@ -316,61 +270,13 @@ export function NewReportForm({ rooms, templates, userId }: NewReportFormProps) 
               </Select>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Year</Label>
-                <Select value={selectedYear} onValueChange={setSelectedYear}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {[2024, 2025, 2026].map((year) => (
-                      <SelectItem key={year} value={year.toString()}>
-                        {year}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Month</Label>
-                <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {MONTHS.map((month, index) => (
-                      <SelectItem key={index + 1} value={(index + 1).toString()}>
-                        {month}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <span className="font-medium">Report Period:</span>
+              <span>
+                {MONTHS[parseInt(selectedMonth) - 1]} {selectedYear}
+                {isDaily && selectedDay ? `, Day ${selectedDay}` : ""}
+              </span>
             </div>
-
-            {isDaily && (
-              <div className="space-y-2">
-                <Label>Day (Optional for daily reports)</Label>
-                <Select 
-                  value={selectedDay || "all"} 
-                  onValueChange={(v) => setSelectedDay(v === "all" ? "" : v)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select day" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Whole month</SelectItem>
-                    {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
-                      <SelectItem key={day} value={day.toString()}>
-                        {day}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
 
             <Button
               className="w-full"
