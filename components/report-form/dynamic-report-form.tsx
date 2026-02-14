@@ -31,7 +31,7 @@ import {
   type ColumnDefinition,
 } from "@/lib/template-types";
 import { cn } from "@/lib/utils";
-import { Save, Send, Loader2 } from "lucide-react";
+import { Save, Send, Loader2, Eye, Edit2, X, CheckCircle } from "lucide-react";
 
 // ============================================
 // Simple List Form
@@ -41,9 +41,10 @@ interface SimpleListFormProps {
   schema: SimpleListTemplateSchema;
   data: Record<string, Record<string, string>>;
   onChange: (data: Record<string, Record<string, string>>) => void;
+  readOnly?: boolean;
 }
 
-function SimpleListForm({ schema, data, onChange }: SimpleListFormProps) {
+function SimpleListForm({ schema, data, onChange, readOnly = false }: SimpleListFormProps) {
   const handleValueChange = (rowId: string, columnId: string, value: string) => {
     onChange({
       ...data,
@@ -75,13 +76,21 @@ function SimpleListForm({ schema, data, onChange }: SimpleListFormProps) {
               <TableCell className="border">{row.label}</TableCell>
               {schema.valueColumns.map((col) => (
                 <TableCell key={col.id} className="text-center border p-1">
-                  <Input
-                    type={col.fieldType === "number" ? "number" : "text"}
-                    value={data[row.id]?.[col.id] || ""}
-                    onChange={(e) => handleValueChange(row.id, col.id, e.target.value)}
-                    className="w-24 mx-auto text-center"
-                    min="0"
-                  />
+                  {readOnly ? (
+                    <span className="text-sm font-medium">
+                      {data[row.id]?.[col.id] || "-"}
+                    </span>
+                  ) : (
+                    <Input
+                      type={col.fieldType === "number" ? "number" : "text"}
+                      value={data[row.id]?.[col.id] || ""}
+                      onChange={(e) => handleValueChange(row.id, col.id, e.target.value)}
+                      className="w-24 mx-auto text-center"
+                      min="0"
+                      readOnly={readOnly}
+                      disabled={readOnly}
+                    />
+                  )}
                 </TableCell>
               ))}
             </TableRow>
@@ -100,6 +109,7 @@ interface MatrixFormProps {
   schema: MatrixTemplateSchema;
   data: Record<string, Record<string, string>>;
   onChange: (data: Record<string, Record<string, string>>) => void;
+  readOnly?: boolean;
 }
 
 function buildHeaderRows(columns: ColumnDefinition[]): Array<Array<{ label: string; colSpan: number; rowSpan: number; isGroup: boolean }>> {
@@ -134,7 +144,7 @@ function buildHeaderRows(columns: ColumnDefinition[]): Array<Array<{ label: stri
   return rows;
 }
 
-function MatrixForm({ schema, data, onChange }: MatrixFormProps) {
+function MatrixForm({ schema, data, onChange, readOnly = false }: MatrixFormProps) {
   const headerRows = buildHeaderRows(schema.columns);
   const leafColumns = getLeafColumns(schema.columns);
   const hasGroups = schema.columns.some(col => col.type === "group");
@@ -208,13 +218,21 @@ function MatrixForm({ schema, data, onChange }: MatrixFormProps) {
               <TableCell className="border">{row.label}</TableCell>
               {leafColumns.map((col) => (
                 <TableCell key={col.id} className="text-center border p-1">
-                  <Input
-                    type="number"
-                    value={data[row.id]?.[col.id] || ""}
-                    onChange={(e) => handleValueChange(row.id, col.id, e.target.value)}
-                    className="w-16 mx-auto text-center"
-                    min="0"
-                  />
+                  {readOnly ? (
+                    <span className="text-sm font-medium">
+                      {data[row.id]?.[col.id] || "-"}
+                    </span>
+                  ) : (
+                    <Input
+                      type="number"
+                      value={data[row.id]?.[col.id] || ""}
+                      onChange={(e) => handleValueChange(row.id, col.id, e.target.value)}
+                      className="w-16 mx-auto text-center"
+                      min="0"
+                      readOnly={readOnly}
+                      disabled={readOnly}
+                    />
+                  )}
                 </TableCell>
               ))}
             </TableRow>
@@ -239,6 +257,7 @@ interface DynamicReportFormProps {
   initialData?: Record<string, any>;
   onSave: (data: Record<string, any>, status: "draft" | "submitted") => Promise<void>;
   saving?: boolean;
+  status?: string;
 }
 
 export function DynamicReportForm({
@@ -251,11 +270,16 @@ export function DynamicReportForm({
   initialData,
   onSave,
   saving = false,
+  status = "draft",
 }: DynamicReportFormProps) {
   const [data, setData] = useState<Record<string, Record<string, string>>>(
     initialData || {}
   );
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+
+  const isSubmitted = status === "submitted";
+  const isReadOnly = isSubmitted && !isEditing;
 
   // Auto-save draft every 30 seconds
   useEffect(() => {
@@ -280,6 +304,17 @@ export function DynamicReportForm({
 
   const handleSubmit = async () => {
     await onSave(data, "submitted");
+    setIsEditing(false);
+  };
+
+  const handleEdit = () => {
+    setIsEditing(true);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    // Reset data to initial data when canceling
+    setData(initialData || {});
   };
 
   const periodLabel = periodDay 
@@ -291,56 +326,96 @@ export function DynamicReportForm({
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle>
+            <CardTitle className="flex items-center gap-2">
               {schema.title} - {periodLabel}
+              {isSubmitted && (
+                <Badge variant="default" className="bg-green-100 text-green-800 border-green-300">
+                  <CheckCircle className="h-3 w-3 mr-1" />
+                  Submitted
+                </Badge>
+              )}
             </CardTitle>
             <div className="flex items-center gap-4 mt-2">
-              {lastSaved && (
+              {lastSaved && !isSubmitted && (
                 <p className="text-sm text-muted-foreground">
                   Last saved: {lastSaved.toLocaleTimeString()}
+                </p>
+              )}
+              {isSubmitted && !isEditing && (
+                <p className="text-sm text-green-600">
+                  This report has been submitted. Click Edit to make changes.
+                </p>
+              )}
+              {isEditing && (
+                <p className="text-sm text-blue-600">
+                  Editing mode - Make your changes and click Save or Submit
                 </p>
               )}
             </div>
           </div>
           <div className="flex gap-2">
-            <Button 
-              variant="outline" 
-              onClick={handleSaveDraft}
-              disabled={saving}
-            >
-              {saving ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Save className="mr-2 h-4 w-4" />
-              )}
-              Save Draft
-            </Button>
-            <Button 
-              onClick={handleSubmit}
-              disabled={saving}
-            >
-              {saving ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Send className="mr-2 h-4 w-4" />
-              )}
-              Submit Report
-            </Button>
+            {isReadOnly ? (
+              <Button
+                variant="outline"
+                onClick={handleEdit}
+              >
+                <Edit2 className="mr-2 h-4 w-4" />
+                Edit Report
+              </Button>
+            ) : (
+              <>
+                {isEditing && (
+                  <Button
+                    variant="ghost"
+                    onClick={handleCancelEdit}
+                    disabled={saving}
+                  >
+                    <X className="mr-2 h-4 w-4" />
+                    Cancel
+                  </Button>
+                )}
+                <Button
+                  variant="outline"
+                  onClick={handleSaveDraft}
+                  disabled={saving}
+                >
+                  {saving ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Save className="mr-2 h-4 w-4" />
+                  )}
+                  Save Draft
+                </Button>
+                <Button
+                  onClick={handleSubmit}
+                  disabled={saving}
+                >
+                  {saving ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Send className="mr-2 h-4 w-4" />
+                  )}
+                  {isEditing ? "Resubmit Report" : "Submit Report"}
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
         {schema.type === "simple_list" ? (
-          <SimpleListForm 
-            schema={schema} 
-            data={data} 
-            onChange={setData} 
+          <SimpleListForm
+            schema={schema}
+            data={data}
+            onChange={setData}
+            readOnly={isReadOnly}
           />
         ) : (
-          <MatrixForm 
-            schema={schema} 
-            data={data} 
-            onChange={setData} 
+          <MatrixForm
+            schema={schema}
+            data={data}
+            onChange={setData}
+            readOnly={isReadOnly}
           />
         )}
 

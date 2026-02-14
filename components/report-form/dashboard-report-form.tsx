@@ -82,7 +82,21 @@ export function DashboardReportForm({
       if (r.status !== "draft" || r.periodYear !== currentYear || r.periodMonth !== currentMonth) {
         return false;
       }
-      // For daily templates, only include drafts for today
+      // For daily templates, only include drafts for the selected day
+      if (r.periodDay !== null && r.periodDay !== currentDay) {
+        return false;
+      }
+      return true;
+    });
+  }, [reports, currentYear, currentMonth, currentDay]);
+
+  // Get submitted reports for the selected date (to display them in read-only mode)
+  const submittedReportsForDate = useMemo(() => {
+    return reports.filter((r) => {
+      if (r.status !== "submitted" || r.periodYear !== currentYear || r.periodMonth !== currentMonth) {
+        return false;
+      }
+      // For daily templates, only include submitted reports for the selected day
       if (r.periodDay !== null && r.periodDay !== currentDay) {
         return false;
       }
@@ -125,30 +139,44 @@ export function DashboardReportForm({
     return needed;
   }, [rooms, templates, submittedReportKeys, currentDay]);
 
-  // Combine draft reports and needed reports
+  // Combine draft reports, submitted reports, and needed reports
   const allReportsToShow = useMemo(() => {
     const items: Array<
       | { type: "existing"; report: Report }
       | { type: "new"; room: Room; template: Template }
     > = [];
 
-    // Add existing draft reports
+    // Add existing draft reports first
     draftReports.forEach((report) => {
       items.push({ type: "existing", report });
     });
 
-    // Add new report slots for room/template combos that don't have a draft
-    neededReports.forEach(({ room, template }) => {
-      const hasDraft = draftReports.some(
-        (r) => r.roomId === room.id && r.templateId === template.id
+    // Add submitted reports (for viewing in read-only mode)
+    submittedReportsForDate.forEach((report) => {
+      // Only add if not already added as a draft (shouldn't happen, but just in case)
+      const alreadyAdded = items.some(
+        (item) => item.type === "existing" && item.report.id === report.id
       );
-      if (!hasDraft) {
+      if (!alreadyAdded) {
+        items.push({ type: "existing", report });
+      }
+    });
+
+    // Add new report slots for room/template combos that don't have a draft or submitted report
+    neededReports.forEach(({ room, template }) => {
+      const hasExisting = items.some(
+        (item) =>
+          item.type === "existing" &&
+          item.report.roomId === room.id &&
+          item.report.templateId === template.id
+      );
+      if (!hasExisting) {
         items.push({ type: "new", room, template });
       }
     });
 
     return items;
-  }, [draftReports, neededReports]);
+  }, [draftReports, submittedReportsForDate, neededReports]);
 
   const currentItem = allReportsToShow[currentIndex];
 
@@ -216,8 +244,8 @@ export function DashboardReportForm({
           <h1 className="text-3xl font-bold">Welcome, {userName}</h1>
           <p className="text-muted-foreground">
             {isViewingToday
-              ? `No reports to fill for ${currentMonth}/${currentYear}`
-              : `No reports to fill for ${selectedDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}`
+              ? `No reports available for ${currentMonth}/${currentYear}`
+              : `No reports available for ${selectedDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}`
             }
           </p>
         </div>
@@ -261,7 +289,7 @@ export function DashboardReportForm({
           <CardContent className="py-12 text-center text-muted-foreground">
             <AlertCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
             <p>All reports for this period have been submitted!</p>
-            <p className="text-sm mt-2">Great job!</p>
+            <p className="text-sm mt-2">All your assigned reports are complete.</p>
           </CardContent>
         </Card>
       </div>
@@ -291,6 +319,7 @@ export function DashboardReportForm({
   const periodYear = reportData?.periodYear || currentYear;
   const periodMonth = reportData?.periodMonth || currentMonth;
   const periodDay = reportData?.periodDay || (templateData?.periodType === "daily" ? currentDay : undefined);
+  const reportStatus = reportData?.status || "draft";
 
   if (!schema) {
     return (
@@ -381,6 +410,16 @@ export function DashboardReportForm({
                     New
                   </Badge>
                 )}
+                {isExisting && reportData?.status === "submitted" && (
+                  <Badge variant="outline" className="text-green-600 border-green-400 bg-green-50">
+                    Submitted
+                  </Badge>
+                )}
+                {isExisting && reportData?.status === "draft" && (
+                  <Badge variant="outline" className="text-orange-600 border-orange-400 bg-orange-50">
+                    Draft
+                  </Badge>
+                )}
               </div>
             </div>
             <Button
@@ -406,6 +445,7 @@ export function DashboardReportForm({
         initialData={initialData}
         onSave={handleSave}
         saving={saving}
+        status={reportStatus}
       />
     </div>
   );
