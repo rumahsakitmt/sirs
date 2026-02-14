@@ -1,10 +1,9 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { TemplateTypeSelector } from "@/components/template-builder/template-type-selector";
-import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -76,7 +75,7 @@ export default function NewTemplatePage() {
   const [rooms, setRooms] = useState<Array<{ id: string; name: string }>>([]);
   const [showPreview, setShowPreview] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [session, setSession] = useState<any>(null);
+  const [session, setSession] = useState<{ user?: { id: string } } | null>(null);
 
   useEffect(() => {
     loadRooms();
@@ -126,7 +125,8 @@ export default function NewTemplatePage() {
     }
   };
 
-  const handlePreview = () => {
+  const handlePreview = (previewSchema: TemplateSchema) => {
+    setSchema(previewSchema);
     setShowPreview(true);
   };
 
@@ -175,10 +175,13 @@ export default function NewTemplatePage() {
           <DialogHeader>
             <DialogTitle>Template Preview</DialogTitle>
           </DialogHeader>
-          {/* Preview content would go here */}
-          <p className="text-center text-muted-foreground py-8">
-            Preview functionality will be implemented with the schema state
-          </p>
+          {schema ? (
+            <TemplatePreview schema={schema} />
+          ) : (
+            <p className="text-center text-muted-foreground py-8">
+              No schema available for preview
+            </p>
+          )}
         </DialogContent>
       </Dialog>
 

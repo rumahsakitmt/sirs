@@ -36,7 +36,10 @@ export const Header = async () => {
           {currentRoom || "No Room Assigned"}
         </p>
 
-        <UserDropdown name={session.user.name ?? "Guest"} />
+        <UserDropdown 
+          name={session.user.name ?? "Guest"} 
+          isAdmin={session.user.role === "admin"}
+        />
       </div>
     </header>
   );

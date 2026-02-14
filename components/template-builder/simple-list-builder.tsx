@@ -92,7 +92,7 @@ interface SimpleListBuilderProps {
   initialSchema?: SimpleListTemplateSchema;
   onSave: (schema: TemplateSchema) => void;
   onBack: () => void;
-  onPreview: () => void;
+  onPreview: (schema: TemplateSchema) => void;
 }
 
 export function SimpleListBuilder({
@@ -187,6 +187,17 @@ export function SimpleListBuilder({
       rows,
     };
     onSave(schema);
+  };
+
+  const handlePreview = () => {
+    const schema: SimpleListTemplateSchema = {
+      type: "simple_list",
+      title,
+      description: description || undefined,
+      valueColumns,
+      rows,
+    };
+    onPreview(schema);
   };
 
   return (
@@ -342,7 +353,7 @@ export function SimpleListBuilder({
           Back
         </Button>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={onPreview}>
+          <Button variant="outline" onClick={handlePreview}>
             <Eye className="mr-2 h-4 w-4" />
             Preview
           </Button>

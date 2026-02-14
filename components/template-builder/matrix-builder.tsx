@@ -332,7 +332,7 @@ interface MatrixBuilderProps {
   initialSchema?: MatrixTemplateSchema;
   onSave: (schema: TemplateSchema) => void;
   onBack: () => void;
-  onPreview: () => void;
+  onPreview: (schema: TemplateSchema) => void;
 }
 
 export function MatrixBuilder({
@@ -441,6 +441,18 @@ export function MatrixBuilder({
       notes: rows.filter(r => r.note).map(r => `${r.label}: ${r.note}`),
     };
     onSave(schema);
+  };
+
+  const handlePreview = () => {
+    const schema: MatrixTemplateSchema = {
+      type: "matrix",
+      title,
+      description: description || undefined,
+      columns,
+      rows,
+      notes: rows.filter(r => r.note).map(r => `${r.label}: ${r.note}`),
+    };
+    onPreview(schema);
   };
 
   return (
@@ -606,7 +618,7 @@ export function MatrixBuilder({
           Back
         </Button>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={onPreview}>
+          <Button variant="outline" onClick={handlePreview}>
             <Eye className="mr-2 h-4 w-4" />
             Preview
           </Button>

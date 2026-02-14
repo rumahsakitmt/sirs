@@ -1,3 +1,7 @@
+"use client";
+
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -8,23 +12,41 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-export const UserDropdown = ({ name }: { name: string }) => {
+import { authClient } from "@/lib/auth-client";
+import { LogOut } from "lucide-react";
+
+interface UserDropdownProps {
+  name: string;
+  isAdmin: boolean;
+}
+
+export const UserDropdown = ({ name, isAdmin }: UserDropdownProps) => {
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    await authClient.signOut();
+    router.push("/login");
+  };
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost">{name}</Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent>
+      <DropdownMenuContent align="end">
         <DropdownMenuGroup>
           <DropdownMenuLabel>My Account</DropdownMenuLabel>
-          <DropdownMenuItem>Profile</DropdownMenuItem>
-          <DropdownMenuItem>Billing</DropdownMenuItem>
+          {isAdmin && (
+            <DropdownMenuItem asChild>
+              <Link href="/dashboard">Dashboard</Link>
+            </DropdownMenuItem>
+          )}
         </DropdownMenuGroup>
-        <DropdownMenuGroup>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem>Team</DropdownMenuItem>
-          <DropdownMenuItem>Subscription</DropdownMenuItem>
-        </DropdownMenuGroup>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={handleLogout}>
+          <LogOut className="mr-2 h-4 w-4" />
+          Logout
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
