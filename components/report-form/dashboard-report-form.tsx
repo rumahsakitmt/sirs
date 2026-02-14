@@ -6,8 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DynamicReportForm } from "@/components/report-form/dynamic-report-form";
+import { ReportHeatmap } from "@/components/report-form/report-heatmap";
 import { updateReport, createReport } from "@/lib/actions";
-import { AlertCircle, ChevronLeft, ChevronRight, Building2, FileText } from "lucide-react";
+import { AlertCircle, ChevronLeft, ChevronRight, Building2, FileText, CalendarDays, RotateCcw } from "lucide-react";
 
 interface Report {
   id: string;
@@ -51,42 +52,56 @@ interface DashboardReportFormProps {
   userName: string;
 }
 
-export function DashboardReportForm({ 
-  reports, 
-  rooms, 
-  templates, 
+export function DashboardReportForm({
+  reports,
+  rooms,
+  templates,
   userId,
-  userName 
+  userName
 }: DashboardReportFormProps) {
   const router = useRouter();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [saving, setSaving] = useState(false);
   const [createdReportIds, setCreatedReportIds] = useState<Record<number, string>>({});
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
   const currentDate = new Date();
-  const currentYear = currentDate.getFullYear();
-  const currentMonth = currentDate.getMonth() + 1;
-  const currentDay = currentDate.getDate();
+  const isViewingToday =
+    selectedDate.getDate() === currentDate.getDate() &&
+    selectedDate.getMonth() === currentDate.getMonth() &&
+    selectedDate.getFullYear() === currentDate.getFullYear();
+
+  const currentYear = selectedDate.getFullYear();
+  const currentMonth = selectedDate.getMonth() + 1;
+  const currentDay = selectedDate.getDate();
 
   // Get draft reports for current period
+  // For daily templates, only show drafts for today; for monthly, show all drafts for the month
   const draftReports = useMemo(() => {
-    return reports.filter((r) => 
-      r.status === "draft" && 
-      r.periodYear === currentYear && 
-      r.periodMonth === currentMonth
-    );
-  }, [reports, currentYear, currentMonth]);
+    return reports.filter((r) => {
+      if (r.status !== "draft" || r.periodYear !== currentYear || r.periodMonth !== currentMonth) {
+        return false;
+      }
+      // For daily templates, only include drafts for today
+      if (r.periodDay !== null && r.periodDay !== currentDay) {
+        return false;
+      }
+      return true;
+    });
+  }, [reports, currentYear, currentMonth, currentDay]);
 
   // Get submitted reports for current period (to exclude from needed reports)
   const submittedReportKeys = useMemo(() => {
     const keys = new Set<string>();
     reports.forEach((r) => {
       if (r.status === "submitted" && r.periodYear === currentYear && r.periodMonth === currentMonth) {
-        keys.add(`${r.roomId}-${r.templateId}`);
+        // For daily templates, include the day in the key to allow daily submissions
+        const dayKey = r.periodDay !== null ? r.periodDay : "monthly";
+        keys.add(`${r.roomId}-${r.templateId}-${dayKey}`);
       }
     });
     return keys;
-  }, [reports, currentYear, currentMonth]);
+  }, [reports, currentYear, currentMonth, currentDay]);
 
   // Determine which room/template combinations need reports
   const neededReports = useMemo(() => {
@@ -96,8 +111,10 @@ export function DashboardReportForm({
       templates.forEach((template) => {
         // Check if template is for this room or is global (roomId is null)
         if (template.roomId === null || template.roomId === room.id) {
-          const key = `${room.id}-${template.id}`;
-          // Only add if not already submitted
+          // For daily templates, check for today's specific key; for monthly, use "monthly" key
+          const dayKey = template.periodType === "daily" ? currentDay : "monthly";
+          const key = `${room.id}-${template.id}-${dayKey}`;
+          // Only add if not already submitted for this specific day (daily) or month (monthly)
           if (!submittedReportKeys.has(key)) {
             needed.push({ room, template });
           }
@@ -106,7 +123,7 @@ export function DashboardReportForm({
     });
     
     return needed;
-  }, [rooms, templates, submittedReportKeys]);
+  }, [rooms, templates, submittedReportKeys, currentDay]);
 
   // Combine draft reports and needed reports
   const allReportsToShow = useMemo(() => {
@@ -182,13 +199,64 @@ export function DashboardReportForm({
     setCurrentIndex((prev) => Math.min(allReportsToShow.length - 1, prev + 1));
   };
 
+  const handleDayClick = (date: Date) => {
+    setSelectedDate(date);
+    setCurrentIndex(0); // Reset to first report when changing days
+  };
+
+  const handleBackToToday = () => {
+    setSelectedDate(new Date());
+    setCurrentIndex(0);
+  };
+
   if (allReportsToShow.length === 0) {
     return (
       <div className="container mx-auto py-6">
-        <div className="mb-8">
+        <div className="mb-6">
           <h1 className="text-3xl font-bold">Welcome, {userName}</h1>
-          <p className="text-muted-foreground">No reports to fill for {currentMonth}/{currentYear}</p>
+          <p className="text-muted-foreground">
+            {isViewingToday
+              ? `No reports to fill for ${currentMonth}/${currentYear}`
+              : `No reports to fill for ${selectedDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}`
+            }
+          </p>
         </div>
+
+        {/* Activity Heatmap */}
+        <Card className="mb-6">
+          <CardHeader className="pb-3 flex flex-row items-center justify-between">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <CalendarDays className="h-5 w-5" />
+              Activity Overview - {new Date(currentYear, currentMonth - 1).toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+            </CardTitle>
+            {!isViewingToday && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleBackToToday}
+                className="flex items-center gap-1"
+              >
+                <RotateCcw className="h-4 w-4" />
+                Back to Today
+              </Button>
+            )}
+          </CardHeader>
+          <CardContent>
+            <ReportHeatmap
+              reports={reports}
+              year={currentYear}
+              month={currentMonth}
+              onDayClick={handleDayClick}
+              selectedDate={selectedDate}
+            />
+            <p className="text-xs text-muted-foreground mt-4">
+              {isViewingToday
+                ? "Click on any day to fill missing reports. Shows submitted reports for the current month."
+                : `Viewing reports for ${selectedDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}. Click "Back to Today" to return to current date.`}
+            </p>
+          </CardContent>
+        </Card>
+
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
             <AlertCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
@@ -240,9 +308,48 @@ export function DashboardReportForm({
       <div className="mb-6">
         <h1 className="text-3xl font-bold">Welcome, {userName}</h1>
         <p className="text-muted-foreground">
-          Report {currentIndex + 1} of {allReportsToShow.length} to fill for {currentMonth}/{currentYear}
+          {isViewingToday ? (
+            <>Report {currentIndex + 1} of {allReportsToShow.length} to fill for {currentMonth}/{currentYear}</>
+          ) : (
+            <>Viewing reports for <span className="font-medium text-blue-600">{selectedDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</span> - {allReportsToShow.length} report{allReportsToShow.length !== 1 ? "s" : ""} to fill</>
+          )}
         </p>
       </div>
+
+      {/* Activity Heatmap */}
+      <Card className="mb-6">
+        <CardHeader className="pb-3 flex flex-row items-center justify-between">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <CalendarDays className="h-5 w-5" />
+            Activity Overview
+          </CardTitle>
+          {!isViewingToday && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleBackToToday}
+              className="flex items-center gap-1"
+            >
+              <RotateCcw className="h-4 w-4" />
+              Back to Today
+            </Button>
+          )}
+        </CardHeader>
+        <CardContent>
+          <ReportHeatmap
+            reports={reports}
+            year={currentYear}
+            month={currentMonth}
+            onDayClick={handleDayClick}
+            selectedDate={selectedDate}
+          />
+          <p className="text-xs text-muted-foreground mt-4">
+            {isViewingToday
+              ? "Click on any day to fill missing reports. Shows submitted reports for the current month."
+              : `Viewing reports for ${selectedDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}. Click "Back to Today" to return to current date.`}
+          </p>
+        </CardContent>
+      </Card>
 
       <Card className="mb-4 border-blue-200 bg-blue-50/50">
         <CardContent className="py-4">

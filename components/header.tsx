@@ -4,6 +4,7 @@ import Link from "next/link";
 import { db } from "@/lib/db";
 import { room, userRoom } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { UserDropdown } from "./user-dropdown";
 
 export const Header = async () => {
   const session = await auth.api.getSession({
@@ -26,7 +27,7 @@ export const Header = async () => {
 
   return (
     <header className="p-4 sticky top-2">
-      <div className="max-w-5xl mx-auto py-2 flex items-center justify-between font-mono bg-white/40 backdrop-blur-2xl border rounded-full px-8">
+      <div className="max-w-7xl mx-auto py-2 flex items-center justify-between font-mono px-8">
         <Link href="/">
           <p className="font-serif text-xl">SIRS </p>
         </Link>
@@ -35,7 +36,7 @@ export const Header = async () => {
           {currentRoom || "No Room Assigned"}
         </p>
 
-        <p>{session.user.name || "Guest"}</p>
+        <UserDropdown name={session.user.name ?? "Guest"} />
       </div>
     </header>
   );
