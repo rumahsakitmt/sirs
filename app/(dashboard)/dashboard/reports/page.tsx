@@ -20,7 +20,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, FileText, Edit, Eye, Printer } from "lucide-react";
+import { Plus, FileText, Edit, Eye, Printer, BarChart3 } from "lucide-react";
 
 export default async function ReportsPage() {
   const session = await auth.api.getSession({
@@ -46,14 +46,22 @@ export default async function ReportsPage() {
             View and manage your submitted reports
           </p>
         </div>
-        {(isAdmin || userRooms.length > 0) && (
-          <Link href="/reports/new">
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              New Report
+        <div className="flex gap-2">
+          <Link href="/dashboard/reports/viewer">
+            <Button variant="outline">
+              <BarChart3 className="mr-2 h-4 w-4" />
+              View Reports
             </Button>
           </Link>
-        )}
+          {(isAdmin || userRooms.length > 0) && (
+            <Link href="/reports/new">
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                New Report
+              </Button>
+            </Link>
+          )}
+        </div>
       </div>
 
       <Card>

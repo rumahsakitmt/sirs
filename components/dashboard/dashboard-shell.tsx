@@ -15,7 +15,8 @@ import {
   Menu,
   ChevronLeft,
   ChevronRight,
-  LogOut
+  LogOut,
+  BarChart3
 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
@@ -34,6 +35,7 @@ interface DashboardShellProps {
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Reports", href: "/dashboard/reports", icon: FileText },
+  { name: "Report Viewer", href: "/dashboard/reports/viewer", icon: BarChart3 },
   { name: "Rooms", href: "/dashboard/rooms", icon: Building2, adminOnly: true },
   { name: "Templates", href: "/dashboard/templates", icon: FileText, adminOnly: true },
   { name: "Users", href: "/dashboard/users", icon: Users, adminOnly: true },

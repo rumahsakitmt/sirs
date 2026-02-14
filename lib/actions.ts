@@ -325,3 +325,80 @@ export async function deleteUser(userId: string) {
   await db.delete(user).where(eq(user.id, userId));
   revalidatePath("/users");
 }
+
+// ============================================
+// Report Viewer Actions
+// ============================================
+
+export async function getReportsForViewer(
+  templateId: string,
+  filters?: {
+    year?: number;
+    month?: number;
+    startDay?: number;
+    endDay?: number;
+    roomId?: string;
+    status?: "draft" | "submitted";
+  }
+) {
+  const conditions = [eq(report.templateId, templateId)];
+
+  if (filters?.year) {
+    conditions.push(eq(report.periodYear, filters.year));
+  }
+
+  if (filters?.month) {
+    conditions.push(eq(report.periodMonth, filters.month));
+  }
+
+  if (filters?.roomId) {
+    conditions.push(eq(report.roomId, filters.roomId));
+  }
+
+  if (filters?.status) {
+    conditions.push(eq(report.status, filters.status));
+  }
+
+  const reports = await db
+    .select({
+      id: report.id,
+      periodYear: report.periodYear,
+      periodMonth: report.periodMonth,
+      periodDay: report.periodDay,
+      data: report.data,
+      status: report.status,
+      createdAt: report.createdAt,
+      submittedAt: report.submittedAt,
+      room: {
+        id: room.id,
+        name: room.name,
+      },
+      user: {
+        id: user.id,
+        name: user.name,
+      },
+    })
+    .from(report)
+    .leftJoin(room, eq(report.roomId, room.id))
+    .leftJoin(user, eq(report.userId, user.id))
+    .where(and(...conditions))
+    .orderBy(
+      desc(report.periodYear),
+      desc(report.periodMonth),
+      desc(report.periodDay)
+    );
+
+  // Filter by day range if daily reports
+  if (filters?.startDay !== undefined || filters?.endDay !== undefined) {
+    return reports.filter((r) => {
+      if (r.periodDay === null) return true;
+      if (filters?.startDay !== undefined && r.periodDay < filters.startDay)
+        return false;
+      if (filters?.endDay !== undefined && r.periodDay > filters.endDay)
+        return false;
+      return true;
+    });
+  }
+
+  return reports;
+}
