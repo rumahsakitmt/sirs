@@ -27,7 +27,7 @@ export const Header = async () => {
 
   return (
     <header className="p-4 sticky top-2">
-      <div className="max-w-7xl mx-auto py-2 flex items-center justify-between font-mono px-8">
+      <div className="container mx-auto py-2 flex items-center justify-between font-mono">
         <Link href="/">
           <p className="font-serif text-xl">SIRS </p>
         </Link>
@@ -36,8 +36,8 @@ export const Header = async () => {
           {currentRoom || "No Room Assigned"}
         </p>
 
-        <UserDropdown 
-          name={session.user.name ?? "Guest"} 
+        <UserDropdown
+          name={session.user.name ?? "Guest"}
           isAdmin={session.user.role === "admin"}
         />
       </div>

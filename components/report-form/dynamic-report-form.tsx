@@ -21,7 +21,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { 
+import {
   getAllFieldIds,
   getLeafColumns,
   getColumnDepth,
@@ -44,8 +44,17 @@ interface SimpleListFormProps {
   readOnly?: boolean;
 }
 
-function SimpleListForm({ schema, data, onChange, readOnly = false }: SimpleListFormProps) {
-  const handleValueChange = (rowId: string, columnId: string, value: string) => {
+function SimpleListForm({
+  schema,
+  data,
+  onChange,
+  readOnly = false,
+}: SimpleListFormProps) {
+  const handleValueChange = (
+    rowId: string,
+    columnId: string,
+    value: string,
+  ) => {
     onChange({
       ...data,
       [rowId]: {
@@ -56,7 +65,7 @@ function SimpleListForm({ schema, data, onChange, readOnly = false }: SimpleList
   };
 
   return (
-    <div className="border rounded-lg overflow-hidden">
+    <div className="border overflow-hidden">
       <Table>
         <TableHeader>
           <TableRow>
@@ -84,7 +93,9 @@ function SimpleListForm({ schema, data, onChange, readOnly = false }: SimpleList
                     <Input
                       type={col.fieldType === "number" ? "number" : "text"}
                       value={data[row.id]?.[col.id] || ""}
-                      onChange={(e) => handleValueChange(row.id, col.id, e.target.value)}
+                      onChange={(e) =>
+                        handleValueChange(row.id, col.id, e.target.value)
+                      }
                       className="w-24 mx-auto text-center"
                       min="0"
                       readOnly={readOnly}
@@ -112,10 +123,17 @@ interface MatrixFormProps {
   readOnly?: boolean;
 }
 
-function buildHeaderRows(columns: ColumnDefinition[]): Array<Array<{ label: string; colSpan: number; rowSpan: number; isGroup: boolean }>> {
+function buildHeaderRows(
+  columns: ColumnDefinition[],
+): Array<
+  Array<{ label: string; colSpan: number; rowSpan: number; isGroup: boolean }>
+> {
   const depth = getColumnDepth(columns);
-  const rows: Array<Array<{ label: string; colSpan: number; rowSpan: number; isGroup: boolean }>> = 
-    Array(depth).fill(null).map(() => []);
+  const rows: Array<
+    Array<{ label: string; colSpan: number; rowSpan: number; isGroup: boolean }>
+  > = Array(depth)
+    .fill(null)
+    .map(() => []);
 
   function processColumns(cols: ColumnDefinition[], currentDepth: number) {
     for (const col of cols) {
@@ -144,12 +162,21 @@ function buildHeaderRows(columns: ColumnDefinition[]): Array<Array<{ label: stri
   return rows;
 }
 
-function MatrixForm({ schema, data, onChange, readOnly = false }: MatrixFormProps) {
+function MatrixForm({
+  schema,
+  data,
+  onChange,
+  readOnly = false,
+}: MatrixFormProps) {
   const headerRows = buildHeaderRows(schema.columns);
   const leafColumns = getLeafColumns(schema.columns);
-  const hasGroups = schema.columns.some(col => col.type === "group");
+  const hasGroups = schema.columns.some((col) => col.type === "group");
 
-  const handleValueChange = (rowId: string, columnId: string, value: string) => {
+  const handleValueChange = (
+    rowId: string,
+    columnId: string,
+    value: string,
+  ) => {
     onChange({
       ...data,
       [rowId]: {
@@ -160,7 +187,7 @@ function MatrixForm({ schema, data, onChange, readOnly = false }: MatrixFormProp
   };
 
   return (
-    <div className="border rounded-lg overflow-x-auto">
+    <div className="border  overflow-x-auto">
       <Table>
         <TableHeader>
           {hasGroups ? (
@@ -168,16 +195,16 @@ function MatrixForm({ schema, data, onChange, readOnly = false }: MatrixFormProp
               {headerRows.map((row, rowIndex) => (
                 <TableRow key={rowIndex}>
                   {rowIndex === 0 && (
-                    <TableHead 
-                      rowSpan={headerRows.length} 
+                    <TableHead
+                      rowSpan={headerRows.length}
                       className="w-12 text-center border align-middle"
                     >
                       NO
                     </TableHead>
                   )}
                   {rowIndex === 0 && (
-                    <TableHead 
-                      rowSpan={headerRows.length} 
+                    <TableHead
+                      rowSpan={headerRows.length}
                       className="border align-middle min-w-[200px]"
                     >
                       JENIS PELAYANAN
@@ -190,7 +217,7 @@ function MatrixForm({ schema, data, onChange, readOnly = false }: MatrixFormProp
                       rowSpan={cell.rowSpan}
                       className={cn(
                         "text-center border align-middle",
-                        cell.isGroup && "bg-muted/50 font-semibold"
+                        cell.isGroup && "bg-muted/50 font-semibold",
                       )}
                     >
                       {cell.label}
@@ -202,7 +229,9 @@ function MatrixForm({ schema, data, onChange, readOnly = false }: MatrixFormProp
           ) : (
             <TableRow>
               <TableHead className="w-12 text-center border">NO</TableHead>
-              <TableHead className="border min-w-[200px]">JENIS PELAYANAN</TableHead>
+              <TableHead className="border min-w-[200px]">
+                JENIS PELAYANAN
+              </TableHead>
               {leafColumns.map((col) => (
                 <TableHead key={col.id} className="text-center border">
                   {col.label}
@@ -226,7 +255,9 @@ function MatrixForm({ schema, data, onChange, readOnly = false }: MatrixFormProp
                     <Input
                       type="number"
                       value={data[row.id]?.[col.id] || ""}
-                      onChange={(e) => handleValueChange(row.id, col.id, e.target.value)}
+                      onChange={(e) =>
+                        handleValueChange(row.id, col.id, e.target.value)
+                      }
                       className="w-16 mx-auto text-center"
                       min="0"
                       readOnly={readOnly}
@@ -243,10 +274,6 @@ function MatrixForm({ schema, data, onChange, readOnly = false }: MatrixFormProp
   );
 }
 
-// ============================================
-// Main Dynamic Report Form Component
-// ============================================
-
 interface DynamicReportFormProps {
   schema: TemplateSchema;
   roomId: string;
@@ -254,8 +281,11 @@ interface DynamicReportFormProps {
   periodYear: number;
   periodMonth: number;
   periodDay?: number;
-  initialData?: Record<string, any>;
-  onSave: (data: Record<string, any>, status: "draft" | "submitted") => Promise<void>;
+  initialData?: Record<string, Record<string, string>>;
+  onSave: (
+    data: Record<string, Record<string, string>>,
+    status: "draft" | "submitted",
+  ) => Promise<void>;
   saving?: boolean;
   status?: string;
 }
@@ -273,7 +303,7 @@ export function DynamicReportForm({
   status = "draft",
 }: DynamicReportFormProps) {
   const [data, setData] = useState<Record<string, Record<string, string>>>(
-    initialData || {}
+    initialData || {},
   );
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -281,7 +311,6 @@ export function DynamicReportForm({
   const isSubmitted = status === "submitted";
   const isReadOnly = isSubmitted && !isEditing;
 
-  // Auto-save draft every 30 seconds
   useEffect(() => {
     const interval = setInterval(async () => {
       if (Object.keys(data).length > 0) {
@@ -313,13 +342,12 @@ export function DynamicReportForm({
 
   const handleCancelEdit = () => {
     setIsEditing(false);
-    // Reset data to initial data when canceling
     setData(initialData || {});
   };
 
-  const periodLabel = periodDay 
-    ? `${String(periodDay).padStart(2, '0')}/${String(periodMonth).padStart(2, '0')}/${periodYear}`
-    : `${String(periodMonth).padStart(2, '0')}/${periodYear}`;
+  const periodLabel = periodDay
+    ? `${String(periodDay).padStart(2, "0")}/${String(periodMonth).padStart(2, "0")}/${periodYear}`
+    : `${String(periodMonth).padStart(2, "0")}/${periodYear}`;
 
   return (
     <Card>
@@ -329,38 +357,38 @@ export function DynamicReportForm({
             <CardTitle className="flex items-center gap-2">
               {schema.title} - {periodLabel}
               {isSubmitted && (
-                <Badge variant="default" className="bg-green-100 text-green-800 border-green-300">
+                <Badge
+                  variant="default"
+                  className="bg-green-100 text-green-800 border-green-300"
+                >
                   <CheckCircle className="h-3 w-3 mr-1" />
-                  Submitted
+                  Terkirim
                 </Badge>
               )}
             </CardTitle>
             <div className="flex items-center gap-4 mt-2">
               {lastSaved && !isSubmitted && (
                 <p className="text-sm text-muted-foreground">
-                  Last saved: {lastSaved.toLocaleTimeString()}
+                  Terakhir disimpan: {lastSaved.toLocaleTimeString()}
                 </p>
               )}
               {isSubmitted && !isEditing && (
                 <p className="text-sm text-green-600">
-                  This report has been submitted. Click Edit to make changes.
+                  Laporan ini telah dikirim. Klik Edit untuk membuat perubahan.
                 </p>
               )}
               {isEditing && (
                 <p className="text-sm text-blue-600">
-                  Editing mode - Make your changes and click Save or Submit
+                  Mode edit - Buat perubahan dan klik Simpan atau Kirim
                 </p>
               )}
             </div>
           </div>
           <div className="flex gap-2">
             {isReadOnly ? (
-              <Button
-                variant="outline"
-                onClick={handleEdit}
-              >
+              <Button variant="outline" onClick={handleEdit}>
                 <Edit2 className="mr-2 h-4 w-4" />
-                Edit Report
+                Edit Laporan
               </Button>
             ) : (
               <>
@@ -371,7 +399,7 @@ export function DynamicReportForm({
                     disabled={saving}
                   >
                     <X className="mr-2 h-4 w-4" />
-                    Cancel
+                    Batal
                   </Button>
                 )}
                 <Button
@@ -384,18 +412,15 @@ export function DynamicReportForm({
                   ) : (
                     <Save className="mr-2 h-4 w-4" />
                   )}
-                  Save Draft
+                  Simpan Draft
                 </Button>
-                <Button
-                  onClick={handleSubmit}
-                  disabled={saving}
-                >
+                <Button onClick={handleSubmit} disabled={saving}>
                   {saving ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   ) : (
                     <Send className="mr-2 h-4 w-4" />
                   )}
-                  {isEditing ? "Resubmit Report" : "Submit Report"}
+                  {isEditing ? "Kirim Ulang Laporan" : "Kirim Laporan"}
                 </Button>
               </>
             )}
@@ -419,14 +444,18 @@ export function DynamicReportForm({
           />
         )}
 
-        {schema.type === "matrix" && schema.notes && schema.notes.length > 0 && (
-          <div className="text-sm space-y-1 mt-6">
-            <p className="font-semibold">NB :</p>
-            {schema.notes.map((note, index) => (
-              <p key={index} className="text-muted-foreground">{note}</p>
-            ))}
-          </div>
-        )}
+        {schema.type === "matrix" &&
+          schema.notes &&
+          schema.notes.length > 0 && (
+            <div className="text-sm space-y-1 mt-6">
+              <p className="font-semibold">Catatan :</p>
+              {schema.notes.map((note, index) => (
+                <p key={index} className="text-muted-foreground">
+                  {note}
+                </p>
+              ))}
+            </div>
+          )}
       </CardContent>
     </Card>
   );

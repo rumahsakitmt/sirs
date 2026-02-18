@@ -2,15 +2,18 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import {
   getReports,
   getUserRooms,
   getTemplates,
   getRooms,
+  getTodaySubmissionSummary,
 } from "@/lib/actions";
-import { FileText, Building2, ClipboardList, Plus } from "lucide-react";
+import { FileText, Building2, ClipboardList, Plus, CheckCircle2, Clock, AlertCircle, Calendar } from "lucide-react";
 
 export default async function DashboardPage() {
   const session = await auth.api.getSession({
@@ -24,11 +27,12 @@ export default async function DashboardPage() {
   const isAdmin = session.user.role === "admin";
 
   // Get stats
-  const [reports, userRooms, templates, rooms] = await Promise.all([
+  const [reports, userRooms, templates, rooms, submissionSummary] = await Promise.all([
     getReports(session.user.id, isAdmin),
     isAdmin ? Promise.resolve([]) : getUserRooms(session.user.id),
     isAdmin ? getTemplates() : Promise.resolve([]),
     isAdmin ? getRooms() : Promise.resolve([]),
+    isAdmin ? getTodaySubmissionSummary() : Promise.resolve(null),
   ]);
 
   const draftReports = reports.filter((r) => r.status === "draft");
@@ -125,7 +129,7 @@ export default async function DashboardPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <Link href="/reports/new">
+                <Link href="/dashboard/reports/new">
                   <Button className="w-full">
                     <Plus className="mr-2 h-4 w-4" />
                     New Report
@@ -136,6 +140,144 @@ export default async function DashboardPage() {
           </>
         )}
       </div>
+
+      {/* Room Submission Status - Admin Only */}
+      {isAdmin && submissionSummary && (
+        <Card className="mb-8">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Calendar className="h-5 w-5" />
+                  Today&apos;s Submission Status
+                </CardTitle>
+                <CardDescription>
+                  {new Date().toLocaleDateString("en-US", {
+                    weekday: "long",
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })}
+                </CardDescription>
+              </div>
+              <div className="flex gap-2">
+                <Badge variant="default" className="gap-1">
+                  <CheckCircle2 className="h-3 w-3" />
+                  {submissionSummary.roomsFullySubmitted} Complete
+                </Badge>
+                <Badge variant="secondary" className="gap-1">
+                  <Clock className="h-3 w-3" />
+                  {submissionSummary.roomsPartiallySubmitted} Partial
+                </Badge>
+                <Badge variant="destructive" className="gap-1">
+                  <AlertCircle className="h-3 w-3" />
+                  {submissionSummary.roomsNotSubmitted} Pending
+                </Badge>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {/* Daily Progress */}
+            {submissionSummary.dailyTotalCount > 0 && (
+              <div className="mb-6">
+                <div className="flex justify-between text-sm mb-2">
+                  <span className="text-muted-foreground">Daily Reports Progress</span>
+                  <span className="font-medium">
+                    {submissionSummary.dailySubmittedCount} / {submissionSummary.dailyTotalCount} submitted
+                  </span>
+                </div>
+                <Progress 
+                  value={(submissionSummary.dailySubmittedCount / submissionSummary.dailyTotalCount) * 100} 
+                  className="h-2"
+                />
+              </div>
+            )}
+
+            {/* Room Status Grid */}
+            <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+              {submissionSummary.roomStatuses
+                .filter((rs) => rs.totalTemplates > 0)
+                .sort((a, b) => {
+                  // Sort: pending first, then partial, then complete
+                  if (a.hasAllSubmitted !== b.hasAllSubmitted) {
+                    return a.hasAllSubmitted ? 1 : -1;
+                  }
+                  if (a.submittedCount !== b.submittedCount) {
+                    return a.submittedCount - b.submittedCount;
+                  }
+                  return a.room.name.localeCompare(b.room.name);
+                })
+                .map((rs) => (
+                  <div
+                    key={rs.room.id}
+                    className={`p-4 rounded-lg border ${
+                      rs.hasAllSubmitted
+                        ? "bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-900"
+                        : rs.submittedCount > 0
+                        ? "bg-yellow-50 border-yellow-200 dark:bg-yellow-950/20 dark:border-yellow-900"
+                        : "bg-red-50 border-red-200 dark:bg-red-950/20 dark:border-red-900"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        {rs.hasAllSubmitted ? (
+                          <CheckCircle2 className="h-5 w-5 text-green-600" />
+                        ) : rs.submittedCount > 0 ? (
+                          <Clock className="h-5 w-5 text-yellow-600" />
+                        ) : (
+                          <AlertCircle className="h-5 w-5 text-red-600" />
+                        )}
+                        <span className="font-medium">{rs.room.name}</span>
+                      </div>
+                      <span className="text-xs text-muted-foreground">
+                        {rs.submittedCount}/{rs.totalTemplates}
+                      </span>
+                    </div>
+                    <div className="space-y-1">
+                      {rs.templates
+                        .filter((t) => t.periodType === "daily")
+                        .map((t) => (
+                          <div
+                            key={t.id}
+                            className="flex items-center justify-between text-sm"
+                          >
+                            <span className={t.submitted ? "text-muted-foreground" : "text-foreground"}>
+                              {t.name}
+                            </span>
+                            {t.submitted ? (
+                              <span className="text-xs text-green-600 flex items-center gap-1">
+                                <CheckCircle2 className="h-3 w-3" />
+                                {t.submittedAt && new Date(t.submittedAt).toLocaleTimeString("en-US", {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}
+                              </span>
+                            ) : (
+                              <span className="text-xs text-red-600">Not submitted</span>
+                            )}
+                          </div>
+                        ))}
+                      {rs.templates.filter((t) => t.periodType === "monthly").length > 0 && (
+                        <div className="text-xs text-muted-foreground mt-2 pt-2 border-t">
+                          Monthly: {rs.templates.filter((t) => t.periodType === "monthly" && t.submitted).length}/
+                          {rs.templates.filter((t) => t.periodType === "monthly").length} submitted
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+            </div>
+
+            {submissionSummary.roomStatuses.filter((rs) => rs.totalTemplates > 0).length === 0 && (
+              <div className="text-center py-8 text-muted-foreground">
+                <Building2 className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>No rooms with active templates</p>
+                <p className="text-sm">Create templates and assign them to rooms</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
@@ -176,7 +318,7 @@ export default async function DashboardPage() {
               <div className="text-center py-8 text-muted-foreground">
                 <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <p>No reports yet</p>
-                <Link href="/reports/new">
+                <Link href="/dashboard/reports/new">
                   <Button variant="outline" className="mt-4">
                     Create your first report
                   </Button>
@@ -205,19 +347,19 @@ export default async function DashboardPage() {
           <CardContent>
             {isAdmin ? (
               <div className="space-y-3">
-                <Link href="/templates/new">
+                <Link href="/dashboard/templates/new">
                   <Button variant="outline" className="w-full justify-start">
                     <Plus className="mr-2 h-4 w-4" />
                     Create New Template
                   </Button>
                 </Link>
-                <Link href="/rooms">
+                <Link href="/dashboard/rooms">
                   <Button variant="outline" className="w-full justify-start">
                     <Building2 className="mr-2 h-4 w-4" />
                     Manage Rooms
                   </Button>
                 </Link>
-                <Link href="/users">
+                <Link href="/dashboard/users">
                   <Button variant="outline" className="w-full justify-start">
                     <FileText className="mr-2 h-4 w-4" />
                     Manage Users
@@ -236,7 +378,7 @@ export default async function DashboardPage() {
                         <Building2 className="h-4 w-4 text-muted-foreground" />
                         <span>{ur.room?.name}</span>
                       </div>
-                      <Link href="/reports/new">
+                      <Link href="/dashboard/reports/new">
                         <Button size="sm" variant="ghost">
                           Report
                         </Button>

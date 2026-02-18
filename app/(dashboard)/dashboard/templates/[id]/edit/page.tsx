@@ -125,7 +125,7 @@ export default function EditTemplatePage({ params }: EditTemplatePageProps) {
         schema: newSchema,
         isActive,
       });
-      router.push(`/templates/${id}`);
+      router.push(`/dashboard/templates/${id}`);
       router.refresh();
     } catch (error) {
       console.error("Failed to update template:", error);
@@ -141,7 +141,7 @@ export default function EditTemplatePage({ params }: EditTemplatePageProps) {
   };
 
   const handleBack = () => {
-    router.push(`/templates/${id}`);
+    router.push(`/dashboard/templates/${id}`);
   };
 
   const handlePreview = () => {
@@ -166,7 +166,7 @@ export default function EditTemplatePage({ params }: EditTemplatePageProps) {
           <p className="text-muted-foreground mb-4">
             The template you're looking for doesn't exist or has been deleted.
           </p>
-          <Link href="/templates">
+          <Link href="/dashboard/templates">
             <Button>Back to Templates</Button>
           </Link>
         </div>
@@ -177,7 +177,7 @@ export default function EditTemplatePage({ params }: EditTemplatePageProps) {
   return (
     <div className="container mx-auto py-6 max-w-6xl">
       <div className="flex items-center gap-4 mb-6">
-        <Link href={`/templates/${id}`}>
+        <Link href={`/dashboard/templates/${id}`}>
           <Button variant="outline" size="icon">
             <ArrowLeft className="h-4 w-4" />
           </Button>

@@ -2,7 +2,7 @@
 
 import { db } from "@/lib/db";
 import { room, reportTemplate, report, userRoom, user } from "@/lib/db/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, gte, lte, inArray } from "drizzle-orm";
 import type { TemplateSchema } from "@/lib/template-types";
 import { nanoid } from "nanoid";
 import { revalidatePath } from "next/cache";
@@ -401,4 +401,162 @@ export async function getReportsForViewer(
   }
 
   return reports;
+}
+
+// ============================================
+// Room Submission Status Actions
+// ============================================
+
+export interface RoomSubmissionStatus {
+  room: {
+    id: string;
+    name: string;
+  };
+  templates: {
+    id: string;
+    name: string;
+    periodType: string;
+    submitted: boolean;
+    reportId?: string;
+    submittedAt?: Date | null;
+    submittedBy?: string | null;
+  }[];
+  hasAllSubmitted: boolean;
+  submittedCount: number;
+  totalTemplates: number;
+}
+
+export async function getRoomSubmissionStatus(
+  date: Date = new Date()
+): Promise<RoomSubmissionStatus[]> {
+  const year = date.getFullYear();
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+
+  // Get all rooms
+  const allRooms = await db.select().from(room).orderBy(room.name);
+
+  // Get all active templates
+  const allTemplates = await db
+    .select({
+      id: reportTemplate.id,
+      name: reportTemplate.name,
+      roomId: reportTemplate.roomId,
+      periodType: reportTemplate.periodType,
+      isActive: reportTemplate.isActive,
+    })
+    .from(reportTemplate)
+    .where(eq(reportTemplate.isActive, true));
+
+  // Get today's/this month's submitted reports
+  const submittedReports = await db
+    .select({
+      id: report.id,
+      templateId: report.templateId,
+      roomId: report.roomId,
+      periodYear: report.periodYear,
+      periodMonth: report.periodMonth,
+      periodDay: report.periodDay,
+      status: report.status,
+      submittedAt: report.submittedAt,
+      userName: user.name,
+    })
+    .from(report)
+    .leftJoin(user, eq(report.userId, user.id))
+    .where(
+      and(
+        eq(report.periodYear, year),
+        eq(report.periodMonth, month),
+        eq(report.status, "submitted")
+      )
+    );
+
+  // Build room submission status
+  const roomStatuses: RoomSubmissionStatus[] = allRooms.map((r) => {
+    // Get templates for this room (or global templates with no room)
+    const roomTemplates = allTemplates.filter(
+      (t) => t.roomId === r.id || t.roomId === null
+    );
+
+    const templateStatuses = roomTemplates.map((t) => {
+      // Find matching submitted report
+      const matchingReport = submittedReports.find((rep) => {
+        const matchesTemplate = rep.templateId === t.id;
+        const matchesRoom = rep.roomId === r.id;
+        
+        // For daily templates, check the day matches
+        if (t.periodType === "daily") {
+          return matchesTemplate && matchesRoom && rep.periodDay === day;
+        }
+        // For monthly templates, just check month/year
+        return matchesTemplate && matchesRoom;
+      });
+
+      return {
+        id: t.id,
+        name: t.name,
+        periodType: t.periodType,
+        submitted: !!matchingReport,
+        reportId: matchingReport?.id,
+        submittedAt: matchingReport?.submittedAt,
+        submittedBy: matchingReport?.userName,
+      };
+    });
+
+    const submittedCount = templateStatuses.filter((t) => t.submitted).length;
+
+    return {
+      room: {
+        id: r.id,
+        name: r.name,
+      },
+      templates: templateStatuses,
+      hasAllSubmitted: submittedCount === templateStatuses.length && templateStatuses.length > 0,
+      submittedCount,
+      totalTemplates: templateStatuses.length,
+    };
+  });
+
+  return roomStatuses;
+}
+
+export async function getTodaySubmissionSummary(date: Date = new Date()) {
+  const statuses = await getRoomSubmissionStatus(date);
+  
+  const totalRooms = statuses.length;
+  const roomsWithTemplates = statuses.filter((s) => s.totalTemplates > 0).length;
+  const roomsFullySubmitted = statuses.filter((s) => s.hasAllSubmitted).length;
+  const roomsPartiallySubmitted = statuses.filter(
+    (s) => s.submittedCount > 0 && !s.hasAllSubmitted
+  ).length;
+  const roomsNotSubmitted = statuses.filter(
+    (s) => s.submittedCount === 0 && s.totalTemplates > 0
+  ).length;
+
+  // Daily templates summary
+  const dailyStatuses = statuses.map((s) => ({
+    ...s,
+    templates: s.templates.filter((t) => t.periodType === "daily"),
+  }));
+  
+  const dailySubmittedCount = dailyStatuses.reduce(
+    (sum, s) => sum + s.templates.filter((t) => t.submitted).length,
+    0
+  );
+  const dailyTotalCount = dailyStatuses.reduce(
+    (sum, s) => sum + s.templates.length,
+    0
+  );
+
+  return {
+    date,
+    totalRooms,
+    roomsWithTemplates,
+    roomsFullySubmitted,
+    roomsPartiallySubmitted,
+    roomsNotSubmitted,
+    dailySubmittedCount,
+    dailyTotalCount,
+    roomStatuses: statuses,
+  };
 }

@@ -118,27 +118,23 @@ export default async function Home() {
 
   const [reports, userRoomsData, templatesData] = await Promise.all([
     getReportsWithSchema(userId, isAdmin),
-    isAdmin 
+    isAdmin
       ? db.select({ id: room.id, name: room.name }).from(room)
-      : getUserRoomsData(userId).then(urs => urs.map(ur => ur.room).filter(Boolean)),
+      : getUserRoomsData(userId).then((urs) =>
+          urs.map((ur) => ur.room).filter(Boolean),
+        ),
     getTemplatesData(),
   ]);
-
-  // Cast reports data to proper type
-  const typedReports = reports.map(r => ({
-    ...r,
-    data: r.data as Record<string, any>,
-  }));
 
   return (
     <div>
       <Header />
-      <DashboardReportForm 
-        reports={typedReports} 
+      <DashboardReportForm
+        reports={reports}
         rooms={userRoomsData as any}
         templates={templatesData as any}
         userId={userId}
-        userName={session.user.name} 
+        userName={session.user.name}
       />
     </div>
   );

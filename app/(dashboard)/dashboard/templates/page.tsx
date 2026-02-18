@@ -47,7 +47,7 @@ export default async function TemplatesPage() {
             Manage report templates for different departments
           </p>
         </div>
-        <Link href="/templates/new">
+        <Link href="/dashboard/templates/new">
           <Button>
             <Plus className="mr-2 h-4 w-4" />
             Create Template
@@ -108,7 +108,7 @@ export default async function TemplatesPage() {
           {templates.length === 0 && (
             <div className="text-center py-12 text-muted-foreground">
               <p>No templates created yet.</p>
-              <Link href="/templates/new">
+              <Link href="/dashboard/templates/new">
                 <Button variant="outline" className="mt-4">
                   Create your first template
                 </Button>

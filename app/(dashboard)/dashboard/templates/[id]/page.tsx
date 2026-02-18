@@ -56,7 +56,7 @@ export default async function TemplateViewPage({ params }: TemplateViewPageProps
     <div className="container mx-auto py-6 max-w-6xl">
       <div className="flex justify-between items-start mb-6">
         <div className="flex items-center gap-4">
-          <Link href="/templates">
+          <Link href="/dashboard/templates">
             <Button variant="outline" size="icon">
               <ArrowLeft className="h-4 w-4" />
             </Button>
@@ -68,7 +68,7 @@ export default async function TemplateViewPage({ params }: TemplateViewPageProps
             </p>
           </div>
         </div>
-        <Link href={`/templates/${id}/edit`}>
+        <Link href={`/dashboard/templates/${id}/edit`}>
           <Button>
             <Edit className="mr-2 h-4 w-4" />
             Edit Template

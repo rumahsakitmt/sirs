@@ -54,7 +54,7 @@ export default async function ReportsPage() {
             </Button>
           </Link>
           {(isAdmin || userRooms.length > 0) && (
-            <Link href="/reports/new">
+            <Link href="/dashboard/reports/new">
               <Button>
                 <Plus className="mr-2 h-4 w-4" />
                 New Report
@@ -111,19 +111,19 @@ export default async function ReportsPage() {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      <Link href={`/reports/${report.id}`}>
+                      <Link href={`/dashboard/reports/${report.id}`}>
                         <Button variant="ghost" size="icon">
                           <Eye className="h-4 w-4" />
                         </Button>
                       </Link>
                       {report.status === "draft" && (
-                        <Link href={`/reports/${report.id}/edit`}>
+                        <Link href={`/dashboard/reports/${report.id}/edit`}>
                           <Button variant="ghost" size="icon">
                             <Edit className="h-4 w-4" />
                           </Button>
                         </Link>
                       )}
-                      <Link href={`/reports/${report.id}/print`}>
+                      <Link href={`/dashboard/reports/${report.id}/print`}>
                         <Button variant="ghost" size="icon">
                           <Printer className="h-4 w-4" />
                         </Button>
@@ -140,7 +140,7 @@ export default async function ReportsPage() {
               <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p>No reports found.</p>
               {isAdmin || userRooms.length > 0 ? (
-                <Link href="/reports/new">
+                <Link href="/dashboard/reports/new">
                   <Button variant="outline" className="mt-4">
                     Create your first report
                   </Button>

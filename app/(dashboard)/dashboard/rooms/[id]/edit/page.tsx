@@ -44,7 +44,7 @@ export default function EditRoomPage({ params }: { params: Promise<{ id: string 
       const description = formData.get("description") as string;
       
       await updateRoom(id, name.trim(), description.trim() || undefined);
-      router.push("/rooms");
+      router.push("/dashboard/rooms");
       router.refresh();
     } catch (err) {
       setError("Failed to update room. Please try again.");
@@ -57,7 +57,7 @@ export default function EditRoomPage({ params }: { params: Promise<{ id: string 
     try {
       const { id } = await params;
       await deleteRoom(id);
-      router.push("/rooms");
+      router.push("/dashboard/rooms");
       router.refresh();
     } catch (err) {
       setError("Failed to delete room. Please try again.");
@@ -68,7 +68,7 @@ export default function EditRoomPage({ params }: { params: Promise<{ id: string 
   return (
     <div className="container mx-auto py-6 max-w-2xl">
       <div className="mb-6 flex items-center gap-4">
-        <Link href="/rooms">
+        <Link href="/dashboard/rooms">
           <Button variant="outline" size="icon">
             <ArrowLeft className="h-4 w-4" />
           </Button>
@@ -150,7 +150,7 @@ export default function EditRoomPage({ params }: { params: Promise<{ id: string 
               </AlertDialog>
 
               <div className="flex gap-3">
-                <Link href="/rooms">
+                <Link href="/dashboard/rooms">
                   <Button type="button" variant="outline">
                     Cancel
                   </Button>

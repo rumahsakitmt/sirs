@@ -8,7 +8,15 @@ import { Badge } from "@/components/ui/badge";
 import { DynamicReportForm } from "@/components/report-form/dynamic-report-form";
 import { ReportHeatmap } from "@/components/report-form/report-heatmap";
 import { updateReport, createReport } from "@/lib/actions";
-import { AlertCircle, ChevronLeft, ChevronRight, Building2, FileText, CalendarDays, RotateCcw } from "lucide-react";
+import {
+  AlertCircle,
+  ChevronLeft,
+  ChevronRight,
+  Building2,
+  FileText,
+  CalendarDays,
+  RotateCcw,
+} from "lucide-react";
 
 interface Report {
   id: string;
@@ -57,12 +65,14 @@ export function DashboardReportForm({
   rooms,
   templates,
   userId,
-  userName
+  userName,
 }: DashboardReportFormProps) {
   const router = useRouter();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [saving, setSaving] = useState(false);
-  const [createdReportIds, setCreatedReportIds] = useState<Record<number, string>>({});
+  const [createdReportIds, setCreatedReportIds] = useState<
+    Record<number, string>
+  >({});
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
   const currentDate = new Date();
@@ -79,7 +89,11 @@ export function DashboardReportForm({
   // For daily templates, only show drafts for today; for monthly, show all drafts for the month
   const draftReports = useMemo(() => {
     return reports.filter((r) => {
-      if (r.status !== "draft" || r.periodYear !== currentYear || r.periodMonth !== currentMonth) {
+      if (
+        r.status !== "draft" ||
+        r.periodYear !== currentYear ||
+        r.periodMonth !== currentMonth
+      ) {
         return false;
       }
       // For daily templates, only include drafts for the selected day
@@ -93,7 +107,11 @@ export function DashboardReportForm({
   // Get submitted reports for the selected date (to display them in read-only mode)
   const submittedReportsForDate = useMemo(() => {
     return reports.filter((r) => {
-      if (r.status !== "submitted" || r.periodYear !== currentYear || r.periodMonth !== currentMonth) {
+      if (
+        r.status !== "submitted" ||
+        r.periodYear !== currentYear ||
+        r.periodMonth !== currentMonth
+      ) {
         return false;
       }
       // For daily templates, only include submitted reports for the selected day
@@ -108,7 +126,11 @@ export function DashboardReportForm({
   const submittedReportKeys = useMemo(() => {
     const keys = new Set<string>();
     reports.forEach((r) => {
-      if (r.status === "submitted" && r.periodYear === currentYear && r.periodMonth === currentMonth) {
+      if (
+        r.status === "submitted" &&
+        r.periodYear === currentYear &&
+        r.periodMonth === currentMonth
+      ) {
         // For daily templates, include the day in the key to allow daily submissions
         const dayKey = r.periodDay !== null ? r.periodDay : "monthly";
         keys.add(`${r.roomId}-${r.templateId}-${dayKey}`);
@@ -120,13 +142,14 @@ export function DashboardReportForm({
   // Determine which room/template combinations need reports
   const neededReports = useMemo(() => {
     const needed: Array<{ room: Room; template: Template }> = [];
-    
+
     rooms.forEach((room) => {
       templates.forEach((template) => {
         // Check if template is for this room or is global (roomId is null)
         if (template.roomId === null || template.roomId === room.id) {
           // For daily templates, check for today's specific key; for monthly, use "monthly" key
-          const dayKey = template.periodType === "daily" ? currentDay : "monthly";
+          const dayKey =
+            template.periodType === "daily" ? currentDay : "monthly";
           const key = `${room.id}-${template.id}-${dayKey}`;
           // Only add if not already submitted for this specific day (daily) or month (monthly)
           if (!submittedReportKeys.has(key)) {
@@ -135,7 +158,7 @@ export function DashboardReportForm({
         }
       });
     });
-    
+
     return needed;
   }, [rooms, templates, submittedReportKeys, currentDay]);
 
@@ -155,7 +178,7 @@ export function DashboardReportForm({
     submittedReportsForDate.forEach((report) => {
       // Only add if not already added as a draft (shouldn't happen, but just in case)
       const alreadyAdded = items.some(
-        (item) => item.type === "existing" && item.report.id === report.id
+        (item) => item.type === "existing" && item.report.id === report.id,
       );
       if (!alreadyAdded) {
         items.push({ type: "existing", report });
@@ -168,7 +191,7 @@ export function DashboardReportForm({
         (item) =>
           item.type === "existing" &&
           item.report.roomId === room.id &&
-          item.report.templateId === template.id
+          item.report.templateId === template.id,
       );
       if (!hasExisting) {
         items.push({ type: "new", room, template });
@@ -191,7 +214,8 @@ export function DashboardReportForm({
           await updateReport(currentItem.report.id, data, status);
         } else {
           // Create new report
-          const periodDay = currentItem.template.periodType === "daily" ? currentDay : null;
+          const periodDay =
+            currentItem.template.periodType === "daily" ? currentDay : null;
           const newReportId = await createReport(
             currentItem.template.id,
             currentItem.room.id,
@@ -200,12 +224,15 @@ export function DashboardReportForm({
             currentMonth,
             periodDay,
             data,
-            status
+            status,
           );
           // Store the created report ID so we can update it next time
-          setCreatedReportIds((prev) => ({ ...prev, [currentIndex]: newReportId }));
+          setCreatedReportIds((prev) => ({
+            ...prev,
+            [currentIndex]: newReportId,
+          }));
         }
-        
+
         if (status === "submitted") {
           router.refresh();
         }
@@ -216,7 +243,15 @@ export function DashboardReportForm({
         setSaving(false);
       }
     },
-    [currentItem, currentIndex, currentYear, currentMonth, currentDay, userId, router]
+    [
+      currentItem,
+      currentIndex,
+      currentYear,
+      currentMonth,
+      currentDay,
+      userId,
+      router,
+    ],
   );
 
   const handlePrevious = () => {
@@ -245,8 +280,7 @@ export function DashboardReportForm({
           <p className="text-muted-foreground">
             {isViewingToday
               ? `No reports available for ${currentMonth}/${currentYear}`
-              : `No reports available for ${selectedDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}`
-            }
+              : `No reports available for ${selectedDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}`}
           </p>
         </div>
 
@@ -255,7 +289,11 @@ export function DashboardReportForm({
           <CardHeader className="pb-3 flex flex-row items-center justify-between">
             <CardTitle className="text-lg flex items-center gap-2">
               <CalendarDays className="h-5 w-5" />
-              Activity Overview - {new Date(currentYear, currentMonth - 1).toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+              Activity Overview -{" "}
+              {new Date(currentYear, currentMonth - 1).toLocaleDateString(
+                "en-US",
+                { month: "long", year: "numeric" },
+              )}
             </CardTitle>
             {!isViewingToday && (
               <Button
@@ -289,7 +327,9 @@ export function DashboardReportForm({
           <CardContent className="py-12 text-center text-muted-foreground">
             <AlertCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
             <p>All reports for this period have been submitted!</p>
-            <p className="text-sm mt-2">All your assigned reports are complete.</p>
+            <p className="text-sm mt-2">
+              All your assigned reports are complete.
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -311,14 +351,18 @@ export function DashboardReportForm({
   const isExisting = currentItem.type === "existing";
   const reportData = isExisting ? currentItem.report : null;
   const roomData = isExisting ? currentItem.report?.room : currentItem.room;
-  const templateData = isExisting ? currentItem.report?.template : currentItem.template;
+  const templateData = isExisting
+    ? currentItem.report?.template
+    : currentItem.template;
   const schema = templateData?.schema;
   const initialData = reportData?.data || {};
   const roomId = roomData?.id || "";
   const templateId = templateData?.id || "";
   const periodYear = reportData?.periodYear || currentYear;
   const periodMonth = reportData?.periodMonth || currentMonth;
-  const periodDay = reportData?.periodDay || (templateData?.periodType === "daily" ? currentDay : undefined);
+  const periodDay =
+    reportData?.periodDay ||
+    (templateData?.periodType === "daily" ? currentDay : undefined);
   const reportStatus = reportData?.status || "draft";
 
   if (!schema) {
@@ -335,12 +379,26 @@ export function DashboardReportForm({
   return (
     <div className="container mx-auto py-6">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold">Welcome, {userName}</h1>
+        <h1 className="text-3xl font-bold">Selamat Pagi, {userName}</h1>
         <p className="text-muted-foreground">
           {isViewingToday ? (
-            <>Report {currentIndex + 1} of {allReportsToShow.length} to fill for {currentMonth}/{currentYear}</>
+            <>
+              Report {currentIndex + 1} of {allReportsToShow.length} to fill for{" "}
+              {currentMonth}/{currentYear}
+            </>
           ) : (
-            <>Viewing reports for <span className="font-medium text-blue-600">{selectedDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</span> - {allReportsToShow.length} report{allReportsToShow.length !== 1 ? "s" : ""} to fill</>
+            <>
+              Viewing reports for{" "}
+              <span className="font-medium text-blue-600">
+                {selectedDate.toLocaleDateString("en-US", {
+                  month: "long",
+                  day: "numeric",
+                  year: "numeric",
+                })}
+              </span>{" "}
+              - {allReportsToShow.length} report
+              {allReportsToShow.length !== 1 ? "s" : ""} to fill
+            </>
           )}
         </p>
       </div>
@@ -406,17 +464,26 @@ export function DashboardReportForm({
                   <span className="font-medium">{templateData?.name}</span>
                 </div>
                 {!isExisting && (
-                  <Badge variant="outline" className="text-yellow-600 border-yellow-400">
+                  <Badge
+                    variant="outline"
+                    className="text-yellow-600 border-yellow-400"
+                  >
                     New
                   </Badge>
                 )}
                 {isExisting && reportData?.status === "submitted" && (
-                  <Badge variant="outline" className="text-green-600 border-green-400 bg-green-50">
+                  <Badge
+                    variant="outline"
+                    className="text-green-600 border-green-400 bg-green-50"
+                  >
                     Submitted
                   </Badge>
                 )}
                 {isExisting && reportData?.status === "draft" && (
-                  <Badge variant="outline" className="text-orange-600 border-orange-400 bg-orange-50">
+                  <Badge
+                    variant="outline"
+                    className="text-orange-600 border-orange-400 bg-orange-50"
+                  >
                     Draft
                   </Badge>
                 )}

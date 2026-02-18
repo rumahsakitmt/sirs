@@ -30,7 +30,7 @@ export default function NewRoomPage() {
     setLoading(true);
     try {
       await createRoom(name.trim(), description.trim() || undefined);
-      router.push("/rooms");
+      router.push("/dashboard/rooms");
       router.refresh();
     } catch (err) {
       setError("Failed to create room. Please try again.");
@@ -42,7 +42,7 @@ export default function NewRoomPage() {
   return (
     <div className="container mx-auto py-6 max-w-2xl">
       <div className="mb-6 flex items-center gap-4">
-        <Link href="/rooms">
+        <Link href="/dashboard/rooms">
           <Button variant="outline" size="icon">
             <ArrowLeft className="h-4 w-4" />
           </Button>
@@ -92,7 +92,7 @@ export default function NewRoomPage() {
             </div>
 
             <div className="flex justify-end gap-3">
-              <Link href="/rooms">
+              <Link href="/dashboard/rooms">
                 <Button type="button" variant="outline">
                   Cancel
                 </Button>

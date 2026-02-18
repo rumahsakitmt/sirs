@@ -45,7 +45,7 @@ export default async function RoomsPage() {
             Manage hospital rooms and departments
           </p>
         </div>
-        <Link href="/rooms/new">
+        <Link href="/dashboard/rooms/new">
           <Button>
             <Plus className="mr-2 h-4 w-4" />
             Add Room
@@ -81,7 +81,7 @@ export default async function RoomsPage() {
                   <TableCell>{room.description || "-"}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      <Link href={`/rooms/${room.id}/edit`}>
+                      <Link href={`/dashboard/rooms/${room.id}/edit`}>
                         <Button variant="ghost" size="icon">
                           <Edit className="h-4 w-4" />
                         </Button>

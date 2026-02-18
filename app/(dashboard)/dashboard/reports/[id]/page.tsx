@@ -64,7 +64,7 @@ export default async function ViewReportPage({
   // Check permissions
   const isAdmin = (session.user as any).role === "admin";
   if (!isAdmin && report.report.userId !== session.user.id) {
-    redirect("/reports");
+    redirect("/dashboard/reports");
   }
 
   const { report: reportData, report_template: template, room, user: reportUser } = report;
@@ -189,7 +189,7 @@ export default async function ViewReportPage({
   return (
     <div className="container mx-auto py-6 max-w-6xl">
       <div className="mb-6">
-        <Link href="/reports">
+        <Link href="/dashboard/reports">
           <Button variant="ghost" size="sm">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Reports
@@ -206,14 +206,14 @@ export default async function ViewReportPage({
         </div>
         <div className="flex gap-2">
           {reportData.status === "draft" && (
-            <Link href={`/reports/${id}/edit`}>
+            <Link href={`/dashboard/reports/${id}/edit`}>
               <Button variant="outline">
                 <Edit className="mr-2 h-4 w-4" />
                 Edit
               </Button>
             </Link>
           )}
-          <Link href={`/reports/${id}/print`}>
+          <Link href={`/dashboard/reports/${id}/print`}>
             <Button variant="outline">
               <Printer className="mr-2 h-4 w-4" />
               Print
