@@ -1,141 +1,24 @@
 import { Header } from "@/components/header";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
 import { DashboardReportForm } from "@/components/report-form/dashboard-report-form";
-import { db } from "@/lib/db";
-import { report, room, reportTemplate, user, userRoom } from "@/lib/db/schema";
-import { eq, desc } from "drizzle-orm";
-import { cache } from "react";
+import { cn } from "@/lib/utils";
 
-const getUserRoomsData = cache(async (userId: string) => {
-  return await db
-    .select({
-      roomId: userRoom.roomId,
-      room: {
-        id: room.id,
-        name: room.name,
-      },
-    })
-    .from(userRoom)
-    .leftJoin(room, eq(userRoom.roomId, room.id))
-    .where(eq(userRoom.userId, userId));
-});
-
-const getTemplatesData = cache(async () => {
-  return await db
-    .select({
-      id: reportTemplate.id,
-      name: reportTemplate.name,
-      roomId: reportTemplate.roomId,
-      periodType: reportTemplate.periodType,
-      schema: reportTemplate.schema,
-    })
-    .from(reportTemplate)
-    .where(eq(reportTemplate.isActive, true));
-});
-
-async function getReportsWithSchema(userId: string, isAdmin: boolean) {
-  if (isAdmin) {
-    return await db
-      .select({
-        id: report.id,
-        templateId: report.templateId,
-        roomId: report.roomId,
-        periodYear: report.periodYear,
-        periodMonth: report.periodMonth,
-        periodDay: report.periodDay,
-        data: report.data,
-        status: report.status,
-        createdAt: report.createdAt,
-        submittedAt: report.submittedAt,
-        room: {
-          id: room.id,
-          name: room.name,
-        },
-        template: {
-          id: reportTemplate.id,
-          name: reportTemplate.name,
-          schema: reportTemplate.schema,
-        },
-        user: {
-          id: user.id,
-          name: user.name,
-        },
-      })
-      .from(report)
-      .leftJoin(room, eq(report.roomId, room.id))
-      .leftJoin(reportTemplate, eq(report.templateId, reportTemplate.id))
-      .leftJoin(user, eq(report.userId, user.id))
-      .orderBy(desc(report.createdAt));
-  } else {
-    return await db
-      .select({
-        id: report.id,
-        templateId: report.templateId,
-        roomId: report.roomId,
-        periodYear: report.periodYear,
-        periodMonth: report.periodMonth,
-        periodDay: report.periodDay,
-        data: report.data,
-        status: report.status,
-        createdAt: report.createdAt,
-        submittedAt: report.submittedAt,
-        room: {
-          id: room.id,
-          name: room.name,
-        },
-        template: {
-          id: reportTemplate.id,
-          name: reportTemplate.name,
-          schema: reportTemplate.schema,
-        },
-        user: {
-          id: user.id,
-          name: user.name,
-        },
-      })
-      .from(report)
-      .where(eq(report.userId, userId))
-      .leftJoin(room, eq(report.roomId, room.id))
-      .leftJoin(reportTemplate, eq(report.templateId, reportTemplate.id))
-      .leftJoin(user, eq(report.userId, user.id))
-      .orderBy(desc(report.createdAt));
-  }
-}
-
-export default async function Home() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session) {
-    redirect("/login");
-  }
-
-  const isAdmin = session.user.role === "admin";
-  const userId = session.user.id;
-
-  const [reports, userRoomsData, templatesData] = await Promise.all([
-    getReportsWithSchema(userId, isAdmin),
-    isAdmin
-      ? db.select({ id: room.id, name: room.name }).from(room)
-      : getUserRoomsData(userId).then((urs) =>
-          urs.map((ur) => ur.room).filter(Boolean),
-        ),
-    getTemplatesData(),
-  ]);
-
+export default function Page() {
   return (
-    <div>
-      <Header />
-      <DashboardReportForm
-        reports={reports}
-        rooms={userRoomsData as any}
-        templates={templatesData as any}
-        userId={userId}
-        userName={session.user.name}
+    <div className="relative min-h-screen bg-blue-500 p-4">
+      <div className="relative z-10">
+        <Header />
+        <DashboardReportForm />
+      </div>
+
+      <div
+        className={cn(
+          "absolute inset-0 z-0 opacity-20 pointer-events-none",
+          "[background-size:40px_40px]",
+          "[background-image:linear-gradient(to_right,#ffffff_1px,transparent_1px),linear-gradient(to_bottom,#ffffff_1px,transparent_1px)]",
+          "dark:[background-image:linear-gradient(to_right,#ffffff_1px,transparent_1px),linear-gradient(to_bottom,#ffffff_1px,transparent_1px)]",
+        )}
       />
+      <div className="pointer-events-none absolute inset-0 z-0 flex items-center justify-center bg-blue-500 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,blue)]"></div>
     </div>
   );
 }
