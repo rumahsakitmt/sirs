@@ -308,7 +308,6 @@ export function DynamicReportForm({
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [isEditing, setIsEditing] = useState(false);
 
-  // Update data when initialData changes (e.g., when switching dates)
   useEffect(() => {
     setData(initialData || {});
     setIsEditing(false);

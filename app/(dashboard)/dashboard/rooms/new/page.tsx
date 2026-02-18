@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { createRoom } from "@/lib/actions";
+import { trpc } from "@/lib/trpc/client";
 import { ArrowLeft, Loader2, Plus } from "lucide-react";
 import Link from "next/link";
 
@@ -15,10 +15,19 @@ export default function NewRoomPage() {
   const router = useRouter();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  async function handleSubmit(e: React.SubmitEvent) {
+  const createRoomMutation = trpc.room.create.useMutation({
+    onSuccess: () => {
+      router.push("/dashboard/rooms");
+      router.refresh();
+    },
+    onError: (err) => {
+      setError(err.message || "Gagal membuat ruangan. Silakan coba lagi.");
+    },
+  });
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
 
@@ -27,16 +36,10 @@ export default function NewRoomPage() {
       return;
     }
 
-    setLoading(true);
-    try {
-      await createRoom(name.trim(), description.trim() || undefined);
-      router.push("/dashboard/rooms");
-      router.refresh();
-    } catch (err) {
-      setError("Gagal membuat ruangan. Silakan coba lagi.");
-    } finally {
-      setLoading(false);
-    }
+    createRoomMutation.mutate({
+      name: name.trim(),
+      description: description.trim() || undefined,
+    });
   }
 
   return (
@@ -97,8 +100,8 @@ export default function NewRoomPage() {
                   Batal
                 </Button>
               </Link>
-              <Button type="submit" disabled={loading}>
-                {loading ? (
+              <Button type="submit" disabled={createRoomMutation.isPending}>
+                {createRoomMutation.isPending ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Membuat...

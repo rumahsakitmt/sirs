@@ -135,7 +135,7 @@ export async function createTemplate(
     description: description || null,
     type,
     periodType,
-    schema: schema as any,
+    schema,
     createdBy,
   });
   revalidatePath("/templates");
@@ -155,7 +155,6 @@ export async function updateTemplate(
   await db.update(reportTemplate)
     .set({
       ...updates,
-      schema: updates.schema as any,
       updatedAt: new Date(),
     })
     .where(eq(reportTemplate.id, id));
@@ -239,7 +238,7 @@ export async function createReport(
   periodYear: number,
   periodMonth: number,
   periodDay: number | null,
-  data: Record<string, any>,
+  data: Record<string, unknown>,
   status: "draft" | "submitted" = "draft"
 ) {
   const id = nanoid();
@@ -251,7 +250,7 @@ export async function createReport(
     periodYear,
     periodMonth,
     periodDay,
-    data: data as any,
+    data,
     status,
     submittedAt: status === "submitted" ? new Date() : null,
   });
@@ -262,21 +261,18 @@ export async function createReport(
 
 export async function updateReport(
   id: string,
-  data: Record<string, any>,
+  data: Record<string, unknown>,
   status?: "draft" | "submitted"
 ) {
-  const updates: any = {
-    data: data as any,
-    updatedAt: new Date(),
-  };
-  
-  if (status === "submitted") {
-    updates.status = "submitted";
-    updates.submittedAt = new Date();
-  }
-  
   await db.update(report)
-    .set(updates)
+    .set({
+      data,
+      updatedAt: new Date(),
+      ...(status === "submitted" && {
+        status: "submitted" as const,
+        submittedAt: new Date(),
+      }),
+    })
     .where(eq(report.id, id));
   revalidatePath("/reports");
   revalidatePath("/");

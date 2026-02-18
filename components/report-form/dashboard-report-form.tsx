@@ -1,337 +1,178 @@
 "use client";
 
 import { useState, useCallback, useMemo } from "react";
-import { useRouter } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+
+import { Skeleton } from "@/components/ui/skeleton";
 import { DynamicReportForm } from "@/components/report-form/dynamic-report-form";
-import { ReportHeatmap } from "@/components/report-form/report-heatmap";
-import { updateReport, createReport } from "@/lib/actions";
-import {
-  AlertCircle,
-  ChevronLeft,
-  ChevronRight,
-  Building2,
-  FileText,
-  CalendarDays,
-  RotateCcw,
-} from "lucide-react";
+import { ActivityHeatmapCard } from "@/components/report-form/activity-heatmap-card";
+import { ReportNavigator } from "@/components/report-form/report-navigator";
+import { trpc } from "@/lib/trpc/client";
+import { useQueryClient } from "@tanstack/react-query";
+import { useDashboardReports } from "@/hooks/use-dashboard-reports";
+import { isSameDay, formatTanggal, formatBulanTahun } from "@/lib/report-utils";
+import { AlertCircle } from "lucide-react";
 
-interface Report {
-  id: string;
-  templateId: string;
-  roomId: string;
-  periodYear: number;
-  periodMonth: number;
-  periodDay: number | null;
-  data: Record<string, any>;
-  status: string;
-  template: {
-    id: string;
-    name: string;
-    schema: any;
-    periodType?: string;
-  } | null;
-  room: {
-    id: string;
-    name: string;
-  } | null;
-}
-
-interface Room {
-  id: string;
-  name: string;
-}
-
-interface Template {
-  id: string;
-  name: string;
-  roomId: string | null;
-  periodType: string;
-  schema: any;
-}
-
-interface DashboardReportFormProps {
-  reports: Report[];
-  rooms: Room[];
-  templates: Template[];
-  userId: string;
-  userName: string;
-}
-
-export function DashboardReportForm({
-  reports,
-  rooms,
-  templates,
-  userId,
-  userName,
-}: DashboardReportFormProps) {
-  const router = useRouter();
+export function DashboardReportForm() {
+  const queryClient = useQueryClient();
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [saving, setSaving] = useState(false);
-  const [createdReportIds, setCreatedReportIds] = useState<
-    Record<number, string>
-  >({});
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date>(() => new Date());
 
-  const currentDate = new Date();
-  const isViewingToday =
-    selectedDate.getDate() === currentDate.getDate() &&
-    selectedDate.getMonth() === currentDate.getMonth() &&
-    selectedDate.getFullYear() === currentDate.getFullYear();
+  const reportsQuery = trpc.report.listWithSchema.useQuery();
+  const roomsQuery = trpc.room.listForCurrentUser.useQuery();
+  const templatesQuery = trpc.template.listActive.useQuery();
+
+  const reports = reportsQuery.data ?? [];
+  const rooms = roomsQuery.data ?? [];
+  const templates = templatesQuery.data ?? [];
+
+  const isLoading =
+    reportsQuery.isLoading || roomsQuery.isLoading || templatesQuery.isLoading;
+  const isError =
+    reportsQuery.isError || roomsQuery.isError || templatesQuery.isError;
+
+  const invalidateAll = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: [["report"]] });
+    queryClient.invalidateQueries({ queryKey: [["room"]] });
+    queryClient.invalidateQueries({ queryKey: [["template"]] });
+  }, [queryClient]);
+
+  const createReport = trpc.report.create.useMutation({
+    onSuccess: invalidateAll,
+  });
+  const updateReport = trpc.report.update.useMutation({
+    onSuccess: invalidateAll,
+  });
+
+  const saving = createReport.isPending || updateReport.isPending;
+  const today = useMemo(() => new Date(), []);
+  const isViewingToday = isSameDay(selectedDate, today);
 
   const currentYear = selectedDate.getFullYear();
   const currentMonth = selectedDate.getMonth() + 1;
   const currentDay = selectedDate.getDate();
 
-  // Get draft reports for current period
-  // For daily templates, only show drafts for today; for monthly, show all drafts for the month
-  const draftReports = useMemo(() => {
-    return reports.filter((r) => {
-      if (
-        r.status !== "draft" ||
-        r.periodYear !== currentYear ||
-        r.periodMonth !== currentMonth
-      ) {
-        return false;
-      }
-      // For daily templates, only include drafts for the selected day
-      if (r.periodDay !== null && r.periodDay !== currentDay) {
-        return false;
-      }
-      return true;
-    });
-  }, [reports, currentYear, currentMonth, currentDay]);
-
-  // Get submitted reports for the selected date (to display them in read-only mode)
-  const submittedReportsForDate = useMemo(() => {
-    return reports.filter((r) => {
-      if (
-        r.status !== "submitted" ||
-        r.periodYear !== currentYear ||
-        r.periodMonth !== currentMonth
-      ) {
-        return false;
-      }
-      // For daily templates, only include submitted reports for the selected day
-      if (r.periodDay !== null && r.periodDay !== currentDay) {
-        return false;
-      }
-      return true;
-    });
-  }, [reports, currentYear, currentMonth, currentDay]);
-
-  // Get submitted reports for current period (to exclude from needed reports)
-  const submittedReportKeys = useMemo(() => {
-    const keys = new Set<string>();
-    reports.forEach((r) => {
-      if (
-        r.status === "submitted" &&
-        r.periodYear === currentYear &&
-        r.periodMonth === currentMonth
-      ) {
-        // For daily templates, include the day in the key to allow daily submissions
-        const dayKey = r.periodDay !== null ? r.periodDay : "monthly";
-        keys.add(`${r.roomId}-${r.templateId}-${dayKey}`);
-      }
-    });
-    return keys;
-  }, [reports, currentYear, currentMonth, currentDay]);
-
-  // Determine which room/template combinations need reports
-  const neededReports = useMemo(() => {
-    const needed: Array<{ room: Room; template: Template }> = [];
-
-    rooms.forEach((room) => {
-      templates.forEach((template) => {
-        // Check if template is for this room or is global (roomId is null)
-        if (template.roomId === null || template.roomId === room.id) {
-          // For daily templates, check for today's specific key; for monthly, use "monthly" key
-          const dayKey =
-            template.periodType === "daily" ? currentDay : "monthly";
-          const key = `${room.id}-${template.id}-${dayKey}`;
-          // Only add if not already submitted for this specific day (daily) or month (monthly)
-          if (!submittedReportKeys.has(key)) {
-            needed.push({ room, template });
-          }
-        }
-      });
-    });
-
-    return needed;
-  }, [rooms, templates, submittedReportKeys, currentDay]);
-
-  // Combine draft reports, submitted reports, and needed reports
-  const allReportsToShow = useMemo(() => {
-    const items: Array<
-      | { type: "existing"; report: Report }
-      | { type: "new"; room: Room; template: Template }
-    > = [];
-
-    // Add existing draft reports first
-    draftReports.forEach((report) => {
-      items.push({ type: "existing", report });
-    });
-
-    // Add submitted reports (for viewing in read-only mode)
-    submittedReportsForDate.forEach((report) => {
-      // Only add if not already added as a draft (shouldn't happen, but just in case)
-      const alreadyAdded = items.some(
-        (item) => item.type === "existing" && item.report.id === report.id,
-      );
-      if (!alreadyAdded) {
-        items.push({ type: "existing", report });
-      }
-    });
-
-    // Add new report slots for room/template combos that don't have a draft or submitted report
-    neededReports.forEach(({ room, template }) => {
-      const hasExisting = items.some(
-        (item) =>
-          item.type === "existing" &&
-          item.report.roomId === room.id &&
-          item.report.templateId === template.id,
-      );
-      if (!hasExisting) {
-        items.push({ type: "new", room, template });
-      }
-    });
-
-    return items;
-  }, [draftReports, submittedReportsForDate, neededReports]);
+  const { allReportsToShow } = useDashboardReports({
+    reports,
+    rooms,
+    templates,
+    currentYear,
+    currentMonth,
+    currentDay,
+  });
 
   const currentItem = allReportsToShow[currentIndex];
 
   const handleSave = useCallback(
-    async (data: Record<string, any>, status: "draft" | "submitted") => {
+    async (
+      data: Record<string, Record<string, string>>,
+      status: "draft" | "submitted",
+    ) => {
       if (!currentItem) return;
 
-      setSaving(true);
       try {
         if (currentItem.type === "existing") {
-          // Update existing report
-          await updateReport(currentItem.report.id, data, status);
-        } else {
-          // Create new report
-          const periodDay =
-            currentItem.template.periodType === "daily" ? currentDay : null;
-          const newReportId = await createReport(
-            currentItem.template.id,
-            currentItem.room.id,
-            userId,
-            currentYear,
-            currentMonth,
-            periodDay,
+          await updateReport.mutateAsync({
+            id: currentItem.report.id,
             data,
             status,
-          );
-          // Store the created report ID so we can update it next time
-          setCreatedReportIds((prev) => ({
-            ...prev,
-            [currentIndex]: newReportId,
-          }));
-        }
-
-        if (status === "submitted") {
-          router.refresh();
+          });
+        } else {
+          await createReport.mutateAsync({
+            templateId: currentItem.template.id,
+            roomId: currentItem.room.id,
+            periodYear: currentYear,
+            periodMonth: currentMonth,
+            periodDay:
+              currentItem.template.periodType === "daily" ? currentDay : null,
+            data,
+            status,
+          });
         }
       } catch (error) {
-        console.error("Failed to save report:", error);
-        alert("Failed to save report. Please try again.");
-      } finally {
-        setSaving(false);
+        console.error("Gagal menyimpan laporan:", error);
+        alert("Gagal menyimpan laporan. Silakan coba lagi.");
       }
     },
     [
       currentItem,
-      currentIndex,
       currentYear,
       currentMonth,
       currentDay,
-      userId,
-      router,
+      createReport,
+      updateReport,
     ],
   );
 
-  const handlePrevious = () => {
+  const handlePrevious = useCallback(() => {
     setCurrentIndex((prev) => Math.max(0, prev - 1));
-  };
+  }, []);
 
-  const handleNext = () => {
+  const handleNext = useCallback(() => {
     setCurrentIndex((prev) => Math.min(allReportsToShow.length - 1, prev + 1));
-  };
+  }, [allReportsToShow.length]);
 
-  const handleDayClick = (date: Date) => {
+  const handleDayClick = useCallback((date: Date) => {
     setSelectedDate(date);
-    setCurrentIndex(0); // Reset to first report when changing days
-  };
+    setCurrentIndex(0);
+  }, []);
 
-  const handleBackToToday = () => {
+  const handleBackToToday = useCallback(() => {
     setSelectedDate(new Date());
     setCurrentIndex(0);
-  };
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto py-6">
+        <div className="space-y-4">
+          <Skeleton className="h-40 w-full" />
+          <Skeleton className="h-16 w-full" />
+          <Skeleton className="h-96 w-full" />
+        </div>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="container mx-auto py-6">
+        <p className="text-red-500">
+          Gagal memuat data. Silakan muat ulang halaman.
+        </p>
+      </div>
+    );
+  }
+
+  const heatmap = (
+    <ActivityHeatmapCard
+      reports={reports}
+      currentYear={currentYear}
+      currentMonth={currentMonth}
+      selectedDate={selectedDate}
+      isViewingToday={isViewingToday}
+      onDayClick={handleDayClick}
+      onBackToToday={handleBackToToday}
+    />
+  );
 
   if (allReportsToShow.length === 0) {
     return (
       <div className="container mx-auto py-6">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold">Welcome, {userName}</h1>
-          <p className="text-muted-foreground">
-            {isViewingToday
-              ? `No reports available for ${currentMonth}/${currentYear}`
-              : `No reports available for ${selectedDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}`}
+        <p>
+          {isViewingToday
+            ? `Tidak ada laporan untuk ${formatBulanTahun(currentYear, currentMonth)}`
+            : `Tidak ada laporan untuk ${formatTanggal(selectedDate)}`}
+        </p>
+
+        {heatmap}
+
+        <div className="py-8 text-center text-muted-foreground">
+          <AlertCircle className="h-10 w-10 mx-auto mb-3 opacity-50" />
+          <p className="text-sm">Semua laporan untuk periode ini sudah dikirim!</p>
+          <p className="text-xs mt-1 opacity-70">
+            Seluruh laporan yang ditugaskan sudah lengkap.
           </p>
         </div>
-
-        {/* Activity Heatmap */}
-        <Card className="mb-6">
-          <CardHeader className="pb-3 flex flex-row items-center justify-between">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <CalendarDays className="h-5 w-5" />
-              Activity Overview -{" "}
-              {new Date(currentYear, currentMonth - 1).toLocaleDateString(
-                "en-US",
-                { month: "long", year: "numeric" },
-              )}
-            </CardTitle>
-            {!isViewingToday && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleBackToToday}
-                className="flex items-center gap-1"
-              >
-                <RotateCcw className="h-4 w-4" />
-                Back to Today
-              </Button>
-            )}
-          </CardHeader>
-          <CardContent>
-            <ReportHeatmap
-              reports={reports}
-              year={currentYear}
-              month={currentMonth}
-              onDayClick={handleDayClick}
-              selectedDate={selectedDate}
-            />
-            <p className="text-xs text-muted-foreground mt-4">
-              {isViewingToday
-                ? "Click on any day to fill missing reports. Shows submitted reports for the current month."
-                : `Viewing reports for ${selectedDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}. Click "Back to Today" to return to current date.`}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="py-12 text-center text-muted-foreground">
-            <AlertCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p>All reports for this period have been submitted!</p>
-            <p className="text-sm mt-2">
-              All your assigned reports are complete.
-            </p>
-          </CardContent>
-        </Card>
       </div>
     );
   }
@@ -339,23 +180,22 @@ export function DashboardReportForm({
   if (!currentItem) {
     return (
       <div className="container mx-auto py-6">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold">Welcome, {userName}</h1>
-          <p className="text-muted-foreground">Loading report...</p>
-        </div>
+        <p>Memuat laporan...</p>
       </div>
     );
   }
 
-  // Extract data for display
   const isExisting = currentItem.type === "existing";
   const reportData = isExisting ? currentItem.report : null;
-  const roomData = isExisting ? currentItem.report?.room : currentItem.room;
   const templateData = isExisting
     ? currentItem.report?.template
     : currentItem.template;
+  const roomData = isExisting ? currentItem.report?.room : currentItem.room;
   const schema = templateData?.schema;
-  const initialData = reportData?.data || {};
+  const initialData = (reportData?.data || {}) as Record<
+    string,
+    Record<string, string>
+  >;
   const roomId = roomData?.id || "";
   const templateId = templateData?.id || "";
   const periodYear = reportData?.periodYear || currentYear;
@@ -368,152 +208,37 @@ export function DashboardReportForm({
   if (!schema) {
     return (
       <div className="container mx-auto py-6">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold">Welcome, {userName}</h1>
-          <p className="text-red-500">Error: Template schema is missing</p>
-        </div>
+        <p className="text-red-500">Error: Skema template tidak ditemukan</p>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto py-6">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold">Selamat Pagi, {userName}</h1>
-        <p className="text-muted-foreground">
-          {isViewingToday ? (
-            <>
-              Report {currentIndex + 1} of {allReportsToShow.length} to fill for{" "}
-              {currentMonth}/{currentYear}
-            </>
-          ) : (
-            <>
-              Viewing reports for{" "}
-              <span className="font-medium text-blue-600">
-                {selectedDate.toLocaleDateString("en-US", {
-                  month: "long",
-                  day: "numeric",
-                  year: "numeric",
-                })}
-              </span>{" "}
-              - {allReportsToShow.length} report
-              {allReportsToShow.length !== 1 ? "s" : ""} to fill
-            </>
-          )}
-        </p>
-      </div>
+    <div className="container mx-auto py-6 p-4 sm:p-0 bg-background rounded-2xl">
+      {heatmap}
 
-      {/* Activity Heatmap */}
-      <Card className="mb-6">
-        <CardHeader className="pb-3 flex flex-row items-center justify-between">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <CalendarDays className="h-5 w-5" />
-            Activity Overview
-          </CardTitle>
-          {!isViewingToday && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleBackToToday}
-              className="flex items-center gap-1"
-            >
-              <RotateCcw className="h-4 w-4" />
-              Back to Today
-            </Button>
-          )}
-        </CardHeader>
-        <CardContent>
-          <ReportHeatmap
-            reports={reports}
-            year={currentYear}
-            month={currentMonth}
-            onDayClick={handleDayClick}
-            selectedDate={selectedDate}
-          />
-          <p className="text-xs text-muted-foreground mt-4">
-            {isViewingToday
-              ? "Click on any day to fill missing reports. Shows submitted reports for the current month."
-              : `Viewing reports for ${selectedDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}. Click "Back to Today" to return to current date.`}
-          </p>
-        </CardContent>
-      </Card>
-
-      <Card className="mb-4 border-blue-200 bg-blue-50/50">
-        <CardContent className="py-4">
-          <div className="flex items-center justify-between">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handlePrevious}
-              disabled={currentIndex === 0}
-            >
-              <ChevronLeft className="h-4 w-4 mr-1" />
-              Previous
-            </Button>
-            <div className="flex items-center gap-4">
-              <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-                {currentIndex + 1} / {allReportsToShow.length}
-              </Badge>
-              <div className="flex items-center gap-4 text-sm">
-                <div className="flex items-center gap-2">
-                  <Building2 className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-medium">{roomData?.name}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <FileText className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-medium">{templateData?.name}</span>
-                </div>
-                {!isExisting && (
-                  <Badge
-                    variant="outline"
-                    className="text-yellow-600 border-yellow-400"
-                  >
-                    New
-                  </Badge>
-                )}
-                {isExisting && reportData?.status === "submitted" && (
-                  <Badge
-                    variant="outline"
-                    className="text-green-600 border-green-400 bg-green-50"
-                  >
-                    Submitted
-                  </Badge>
-                )}
-                {isExisting && reportData?.status === "draft" && (
-                  <Badge
-                    variant="outline"
-                    className="text-orange-600 border-orange-400 bg-orange-50"
-                  >
-                    Draft
-                  </Badge>
-                )}
-              </div>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleNext}
-              disabled={currentIndex === allReportsToShow.length - 1}
-            >
-              Next
-              <ChevronRight className="h-4 w-4 ml-1" />
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      <DynamicReportForm
-        schema={schema}
-        roomId={roomId}
-        templateId={templateId}
-        periodYear={periodYear}
-        periodMonth={periodMonth}
-        periodDay={periodDay}
-        initialData={initialData}
-        onSave={handleSave}
-        saving={saving}
-        status={reportStatus}
+      <ReportNavigator
+        currentIndex={currentIndex}
+        totalCount={allReportsToShow.length}
+        currentItem={currentItem}
+        onPrevious={handlePrevious}
+        onNext={handleNext}
       />
+
+      <div className="p-4">
+        <DynamicReportForm
+          schema={schema}
+          roomId={roomId}
+          templateId={templateId}
+          periodYear={periodYear}
+          periodMonth={periodMonth}
+          periodDay={periodDay}
+          initialData={initialData}
+          onSave={handleSave}
+          saving={saving}
+          status={reportStatus}
+        />
+      </div>
     </div>
   );
 }

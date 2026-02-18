@@ -11,19 +11,22 @@ interface TemplateActionsProps {
   templateName: string;
 }
 
-export function TemplateActions({ templateId, templateName }: TemplateActionsProps) {
+export function TemplateActions({
+  templateId,
+  templateName,
+}: TemplateActionsProps) {
   const handleDelete = async () => {
     await deleteTemplate(templateId);
   };
 
   return (
     <div className="flex justify-end gap-2">
-      <Link href={`/templates/${templateId}`}>
+      <Link href={`/dashboard/templates/${templateId}`}>
         <Button variant="ghost" size="icon">
           <Eye className="h-4 w-4" />
         </Button>
       </Link>
-      <Link href={`/templates/${templateId}/edit`}>
+      <Link href={`/dashboard/templates/${templateId}/edit`}>
         <Button variant="ghost" size="icon">
           <Edit className="h-4 w-4" />
         </Button>

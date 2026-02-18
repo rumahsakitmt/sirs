@@ -9,6 +9,7 @@ import {
   index,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
+import type { TemplateSchema } from "@/lib/template-types";
 
 // ============================================
 // Better Auth Tables
@@ -106,7 +107,7 @@ export const reportTemplate = pgTable("report_template", {
   description: text("description"),
   type: text("type").notNull(), // 'simple_list' | 'matrix'
   periodType: text("period_type").notNull().default("monthly"), // 'daily' | 'monthly'
-  schema: jsonb("schema").notNull(), // The template structure
+  schema: jsonb("schema").$type<TemplateSchema>().notNull(), // The template structure
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
@@ -127,7 +128,7 @@ export const report = pgTable("report", {
   periodYear: integer("period_year").notNull(),
   periodMonth: integer("period_month").notNull(),
   periodDay: integer("period_day"), // null for monthly reports
-  data: jsonb("data").notNull(), // The actual report data
+  data: jsonb("data").$type<Record<string, unknown>>().notNull(), // The actual report data
   status: text("status").notNull().default("draft"), // 'draft' | 'submitted'
   submittedAt: timestamp("submitted_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),

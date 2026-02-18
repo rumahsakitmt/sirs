@@ -1,8 +1,19 @@
 import { Header } from "@/components/header";
 import { DashboardReportForm } from "@/components/report-form/dashboard-report-form";
+import { auth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 
-export default function Page() {
+export default async function Page() {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session) {
+    redirect("/login");
+  }
+
   return (
     <div className="relative min-h-screen bg-blue-500 p-4">
       <div className="relative z-10">

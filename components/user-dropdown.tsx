@@ -31,7 +31,7 @@ export const UserDropdown = ({ name, isAdmin }: UserDropdownProps) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost">{name}</Button>
+        <Button className="bg-black hover:bg-black">{name}</Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuGroup>
