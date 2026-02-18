@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { TemplateTypeSelector } from "@/components/template-builder/template-type-selector";
@@ -11,37 +11,44 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { createTemplate, getRooms } from "@/lib/actions";
-import { authClient } from "@/lib/auth-client";
-import type { 
-  TemplateType, 
-  PeriodType, 
-  TemplateSchema 
+import { trpc } from "@/lib/trpc/client";
+import type {
+  TemplateType,
+  PeriodType,
+  TemplateSchema,
 } from "@/lib/template-types";
 import { Loader2 } from "lucide-react";
 
-// Dynamic imports for heavy components to reduce initial bundle size
 const SimpleListBuilder = dynamic(
-  () => import("@/components/template-builder/simple-list-builder").then(mod => ({ default: mod.SimpleListBuilder })),
+  () =>
+    import("@/components/template-builder/simple-list-builder").then((mod) => ({
+      default: mod.SimpleListBuilder,
+    })),
   {
     loading: () => <BuilderSkeleton />,
     ssr: false,
-  }
+  },
 );
 
 const MatrixBuilder = dynamic(
-  () => import("@/components/template-builder/matrix-builder").then(mod => ({ default: mod.MatrixBuilder })),
+  () =>
+    import("@/components/template-builder/matrix-builder").then((mod) => ({
+      default: mod.MatrixBuilder,
+    })),
   {
     loading: () => <BuilderSkeleton />,
     ssr: false,
-  }
+  },
 );
 
 const TemplatePreview = dynamic(
-  () => import("@/components/template-builder/template-preview").then(mod => ({ default: mod.TemplatePreview })),
+  () =>
+    import("@/components/template-builder/template-preview").then((mod) => ({
+      default: mod.TemplatePreview,
+    })),
   {
     loading: () => <Skeleton className="h-64 w-full" />,
-  }
+  },
 );
 
 function BuilderSkeleton() {
@@ -72,25 +79,19 @@ export default function NewTemplatePage() {
   const [periodType, setPeriodType] = useState<PeriodType>("monthly");
   const [templateType, setTemplateType] = useState<TemplateType | null>(null);
   const [schema, setSchema] = useState<TemplateSchema | null>(null);
-  const [rooms, setRooms] = useState<Array<{ id: string; name: string }>>([]);
   const [showPreview, setShowPreview] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [session, setSession] = useState<{ user?: { id: string } } | null>(null);
 
-  useEffect(() => {
-    loadRooms();
-    loadSession();
-  }, []);
-
-  async function loadRooms() {
-    const data = await getRooms();
-    setRooms(data);
-  }
-
-  async function loadSession() {
-    const { data } = await authClient.getSession();
-    setSession(data);
-  }
+  const { data: rooms, isLoading: isLoadingRooms } = trpc.room.list.useQuery();
+  const createTemplateMutation = trpc.template.create.useMutation({
+    onSuccess: () => {
+      router.push("/dashboard/templates");
+      router.refresh();
+    },
+    onError: (error) => {
+      console.error("Failed to create template:", error);
+      alert("Failed to create template. Please try again.");
+    },
+  });
 
   const handleNext = () => {
     if (templateName && roomId && templateType) {
@@ -103,32 +104,23 @@ export default function NewTemplatePage() {
   };
 
   const handleSave = async (newSchema: TemplateSchema) => {
-    if (!session?.user?.id) return;
-    
-    setSaving(true);
-    try {
-      const templateId = await createTemplate(
-        templateName,
-        roomId,
-        templateType!,
-        periodType,
-        newSchema,
-        session.user.id
-      );
-      router.push("/templates");
-      router.refresh();
-    } catch (error) {
-      console.error("Failed to create template:", error);
-      alert("Failed to create template. Please try again.");
-    } finally {
-      setSaving(false);
-    }
+    if (!templateType) return;
+
+    createTemplateMutation.mutate({
+      name: templateName,
+      roomId,
+      type: templateType,
+      periodType,
+      schema: newSchema,
+    });
   };
 
   const handlePreview = (previewSchema: TemplateSchema) => {
     setSchema(previewSchema);
     setShowPreview(true);
   };
+
+  const isSaving = createTemplateMutation.isPending;
 
   return (
     <div className="container mx-auto py-6 max-w-6xl">
@@ -149,7 +141,8 @@ export default function NewTemplatePage() {
           setPeriodType={setPeriodType}
           templateType={templateType}
           setTemplateType={setTemplateType}
-          rooms={rooms}
+          rooms={rooms ?? []}
+          isLoadingRooms={isLoadingRooms}
           onNext={handleNext}
         />
       )}
@@ -185,7 +178,7 @@ export default function NewTemplatePage() {
         </DialogContent>
       </Dialog>
 
-      {saving && (
+      {isSaving && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-card p-6 rounded-lg flex items-center gap-3">
             <Loader2 className="h-5 w-5 animate-spin" />

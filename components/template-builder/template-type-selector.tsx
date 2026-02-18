@@ -4,14 +4,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { 
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { 
+import {
   List,
   Grid3X3,
   ArrowRight,
@@ -31,6 +31,7 @@ interface TemplateTypeSelectorProps {
   templateType: TemplateType | null;
   setTemplateType: (type: TemplateType) => void;
   rooms: Array<{ id: string; name: string }>;
+  isLoadingRooms?: boolean;
   onNext: () => void;
 }
 
@@ -44,6 +45,7 @@ export function TemplateTypeSelector({
   templateType,
   setTemplateType,
   rooms,
+  isLoadingRooms,
   onNext,
 }: TemplateTypeSelectorProps) {
   const canProceed = templateName && roomId && templateType;
@@ -70,9 +72,9 @@ export function TemplateTypeSelector({
 
           <div className="space-y-2">
             <Label htmlFor="room">Room / Department</Label>
-            <Select value={roomId} onValueChange={setRoomId}>
+            <Select value={roomId} onValueChange={setRoomId} disabled={isLoadingRooms}>
               <SelectTrigger>
-                <SelectValue placeholder="Select a room" />
+                <SelectValue placeholder={isLoadingRooms ? "Loading rooms..." : "Select a room"} />
               </SelectTrigger>
               <SelectContent>
                 {rooms.map((room) => (
