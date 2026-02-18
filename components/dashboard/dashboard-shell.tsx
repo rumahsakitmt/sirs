@@ -33,13 +33,13 @@ interface DashboardShellProps {
 }
 
 const navigation = [
-  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { name: "Reports", href: "/dashboard/reports", icon: FileText },
-  { name: "Report Viewer", href: "/dashboard/reports/viewer", icon: BarChart3 },
-  { name: "Rooms", href: "/dashboard/rooms", icon: Building2, adminOnly: true },
-  { name: "Templates", href: "/dashboard/templates", icon: FileText, adminOnly: true },
-  { name: "Users", href: "/dashboard/users", icon: Users, adminOnly: true },
-  { name: "Settings", href: "/dashboard/settings", icon: Settings },
+  { name: "Dasbor", href: "/dashboard", icon: LayoutDashboard },
+  { name: "Laporan", href: "/dashboard/reports", icon: FileText },
+  { name: "Lihat Laporan", href: "/dashboard/reports/viewer", icon: BarChart3 },
+  { name: "Ruangan", href: "/dashboard/rooms", icon: Building2, adminOnly: true },
+  { name: "Template", href: "/dashboard/templates", icon: FileText, adminOnly: true },
+  { name: "Pengguna", href: "/dashboard/users", icon: Users, adminOnly: true },
+  { name: "Pengaturan", href: "/dashboard/settings", icon: Settings },
 ];
 
 function Sidebar({ 
@@ -134,7 +134,7 @@ function Sidebar({
           onClick={handleLogout}
         >
           <LogOut className="h-4 w-4" />
-          {!collapsed && <span className="ml-2">Logout</span>}
+          {!collapsed && <span className="ml-2">Keluar</span>}
         </Button>
       </div>
     </div>
@@ -161,7 +161,7 @@ function MobileSidebar({ user }: { user: DashboardShellProps["user"] }) {
       <SheetTrigger asChild>
         <Button variant="ghost" size="icon" className="md:hidden">
           <Menu className="h-5 w-5" />
-          <span className="sr-only">Open menu</span>
+          <span className="sr-only">Buka menu</span>
         </Button>
       </SheetTrigger>
       <SheetContent side="left" className="w-64 p-0">
@@ -210,7 +210,7 @@ function MobileSidebar({ user }: { user: DashboardShellProps["user"] }) {
               onClick={handleLogout}
             >
               <LogOut className="h-4 w-4 mr-2" />
-              Logout
+              Keluar
             </Button>
           </div>
         </div>

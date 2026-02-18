@@ -29,8 +29,8 @@ export function TemplateActions({ templateId, templateName }: TemplateActionsPro
         </Button>
       </Link>
       <DeleteConfirmationDialog
-        title="Delete Template"
-        description={`Are you sure you want to delete "${templateName}"? This action cannot be undone. Any reports using this template will no longer be accessible.`}
+        title="Hapus Template"
+        description={`Apakah Anda yakin ingin menghapus "${templateName}"? Tindakan ini tidak dapat dibatalkan. Laporan yang menggunakan template ini tidak akan dapat diakses lagi.`}
         onConfirm={handleDelete}
         trigger={
           <Button variant="ghost" size="icon">

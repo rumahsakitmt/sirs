@@ -40,33 +40,33 @@ export default async function RoomsPage() {
     <div className="container mx-auto py-6">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-3xl font-bold">Rooms</h1>
+          <h1 className="text-3xl font-bold">Ruangan</h1>
           <p className="text-muted-foreground">
-            Manage hospital rooms and departments
+            Kelola ruangan dan departemen rumah sakit
           </p>
         </div>
         <Link href="/dashboard/rooms/new">
           <Button>
             <Plus className="mr-2 h-4 w-4" />
-            Add Room
+            Tambah Ruangan
           </Button>
         </Link>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>All Rooms</CardTitle>
+          <CardTitle>Semua Ruangan</CardTitle>
           <CardDescription>
-            {rooms.length} room{rooms.length !== 1 ? "s" : ""} found
+            {rooms.length} ruangan ditemukan
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Description</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead>Nama</TableHead>
+                <TableHead>Deskripsi</TableHead>
+                <TableHead className="text-right">Aksi</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -98,9 +98,9 @@ export default async function RoomsPage() {
 
           {rooms.length === 0 && (
             <div className="text-center py-12 text-muted-foreground">
-              <p>No rooms created yet.</p>
+              <p>Belum ada ruangan yang dibuat.</p>
               <p className="text-sm mt-2">
-                Create rooms to organize your reports by department.
+                Buat ruangan untuk mengorganisir laporan berdasarkan departemen.
               </p>
             </div>
           )}

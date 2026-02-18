@@ -42,37 +42,37 @@ export default async function TemplatesPage() {
     <div className="container mx-auto py-6">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-3xl font-bold">Report Templates</h1>
+          <h1 className="text-3xl font-bold">Template Laporan</h1>
           <p className="text-muted-foreground">
-            Manage report templates for different departments
+            Kelola template laporan untuk berbagai departemen
           </p>
         </div>
         <Link href="/dashboard/templates/new">
           <Button>
             <Plus className="mr-2 h-4 w-4" />
-            Create Template
+            Buat Template
           </Button>
         </Link>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>All Templates</CardTitle>
+          <CardTitle>Semua Template</CardTitle>
           <CardDescription>
-            {templates.length} template{templates.length !== 1 ? "s" : ""} found
+            {templates.length} template ditemukan
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Room</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Period</TableHead>
+                <TableHead>Nama</TableHead>
+                <TableHead>Ruangan</TableHead>
+                <TableHead>Tipe</TableHead>
+                <TableHead>Periode</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Created</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead>Dibuat</TableHead>
+                <TableHead className="text-right">Aksi</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -82,13 +82,13 @@ export default async function TemplatesPage() {
                   <TableCell>{template.room?.name || "-"}</TableCell>
                   <TableCell>
                     <Badge variant="outline">
-                      {template.type === "simple_list" ? "Simple List" : "Matrix"}
+                      {template.type === "simple_list" ? "Daftar Sederhana" : "Matriks"}
                     </Badge>
                   </TableCell>
-                  <TableCell className="capitalize">{template.periodType}</TableCell>
+                  <TableCell className="capitalize">{template.periodType === "daily" ? "Harian" : "Bulanan"}</TableCell>
                   <TableCell>
                     <Badge variant={template.isActive ? "default" : "secondary"}>
-                      {template.isActive ? "Active" : "Inactive"}
+                      {template.isActive ? "Aktif" : "Tidak Aktif"}
                     </Badge>
                   </TableCell>
                   <TableCell>
@@ -107,10 +107,10 @@ export default async function TemplatesPage() {
 
           {templates.length === 0 && (
             <div className="text-center py-12 text-muted-foreground">
-              <p>No templates created yet.</p>
+              <p>Belum ada template yang dibuat.</p>
               <Link href="/dashboard/templates/new">
                 <Button variant="outline" className="mt-4">
-                  Create your first template
+                  Buat template pertama
                 </Button>
               </Link>
             </div>

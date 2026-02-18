@@ -30,13 +30,13 @@ export default function LoginPage() {
       });
 
       if (result.error) {
-        setError(result.error.message || "Failed to sign in");
+          setError(result.error.message || "Gagal masuk");
       } else {
         router.push("/");
         router.refresh();
       }
     } catch (err) {
-      setError("An error occurred during sign in");
+      setError("Terjadi kesalahan saat masuk");
     } finally {
       setLoading(false);
     }
@@ -46,7 +46,7 @@ export default function LoginPage() {
     <Card className="w-full max-w-md">
       <CardHeader className="space-y-1">
         <CardTitle className="text-2xl font-bold text-center">
-          SIRS Login
+          Masuk SIRS
         </CardTitle>
         <CardDescription className="text-center">
           Sistem Informasi Rumah Sakit
@@ -64,14 +64,14 @@ export default function LoginPage() {
             <Input
               id="email"
               type="email"
-              placeholder="name@hospital.com"
+              placeholder="nama@rumahsakit.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">Kata Sandi</Label>
             <Input
               id="password"
               type="password"
@@ -84,17 +84,17 @@ export default function LoginPage() {
             {loading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Signing in...
+                Sedang masuk...
               </>
             ) : (
-              "Sign In"
+              "Masuk"
             )}
           </Button>
         </form>
         <div className="mt-4 text-center text-sm">
-          Don&apos;t have an account?{" "}
+          Belum punya akun?{" "}
           <a href="/register" className="text-primary hover:underline">
-            Register
+            Daftar
           </a>
         </div>
       </CardContent>

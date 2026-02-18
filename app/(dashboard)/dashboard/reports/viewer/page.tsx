@@ -33,9 +33,9 @@ export default async function ReportViewerPage() {
   return (
     <div className="container mx-auto py-6">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold">Report Viewer</h1>
+        <h1 className="text-3xl font-bold">Lihat Laporan</h1>
         <p className="text-muted-foreground">
-          View and analyze report data across multiple periods
+          Lihat dan analisis data laporan di berbagai periode
         </p>
       </div>
 

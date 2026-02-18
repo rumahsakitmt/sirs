@@ -1,9 +1,7 @@
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import Link from "next/link";
-import { db } from "@/lib/db";
-import { room, userRoom } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { getApi } from "@/lib/trpc/server";
 import { UserDropdown } from "./user-dropdown";
 
 export const Header = async () => {
@@ -12,18 +10,12 @@ export const Header = async () => {
   });
 
   if (!session) {
-    return <div>no loggin</div>;
+    return <div>belum masuk</div>;
   }
 
-  const userRooms = await db
-    .select({
-      roomName: room.name,
-    })
-    .from(userRoom)
-    .innerJoin(room, eq(userRoom.roomId, room.id))
-    .where(eq(userRoom.userId, session.user.id));
-
-  const currentRoom = userRooms[0]?.roomName;
+  const api = await getApi();
+  const userRooms = await api.user.getUserRooms({ userId: session.user.id });
+  const currentRoom = userRooms[0]?.room?.name;
 
   return (
     <header className="p-4 sticky top-2">
@@ -33,11 +25,11 @@ export const Header = async () => {
         </Link>
 
         <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-          {currentRoom || "No Room Assigned"}
+          {currentRoom || "Tidak Ada Ruangan"}
         </p>
 
         <UserDropdown
-          name={session.user.name ?? "Guest"}
+          name={session.user.name ?? "Tamu"}
           isAdmin={session.user.role === "admin"}
         />
       </div>

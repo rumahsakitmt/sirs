@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import {
   Table,
   TableBody,
@@ -26,12 +26,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, LineChart, Line, ResponsiveContainer } from "recharts";
+
 import {
   TemplateSchema,
   SimpleListTemplateSchema,
@@ -41,7 +36,7 @@ import {
   type ColumnDefinition,
 } from "@/lib/template-types";
 import { cn } from "@/lib/utils";
-import { Calendar, TrendingUp, Table2, BarChart3, Filter, Download, Eye } from "lucide-react";
+import { Calendar, Filter, Eye, CheckCircle2 } from "lucide-react";
 
 interface ReportData {
   id: string;
@@ -95,16 +90,8 @@ interface ReportViewerProps {
 }
 
 const MONTHS = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December"
-];
-
-const CHART_COLORS = [
-  "hsl(var(--chart-1))",
-  "hsl(var(--chart-2))",
-  "hsl(var(--chart-3))",
-  "hsl(var(--chart-4))",
-  "hsl(var(--chart-5))",
+  "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+  "Juli", "Agustus", "September", "Oktober", "November", "Desember"
 ];
 
 export function ReportViewer({
@@ -123,7 +110,7 @@ export function ReportViewer({
   const [selectedStatus, setSelectedStatus] = useState<"draft" | "submitted" | undefined>("submitted");
   const [reports, setReports] = useState<ReportData[]>(initialReports);
   const [isLoading, setIsLoading] = useState(false);
-  const [viewMode, setViewMode] = useState<"table" | "chart" | "summary">("table");
+
 
   const selectedTemplate = useMemo(
     () => templates.find((t) => t.id === selectedTemplateId),
@@ -166,18 +153,7 @@ export function ReportViewer({
     }
   };
 
-  // Aggregate data for visualization
-  const aggregatedData = useMemo(() => {
-    if (!selectedTemplate?.schema || reports.length === 0) return null;
 
-    const schema = selectedTemplate.schema;
-
-    if (schema.type === "simple_list") {
-      return aggregateSimpleListData(schema, reports);
-    } else {
-      return aggregateMatrixData(schema, reports);
-    }
-  }, [selectedTemplate, reports]);
 
   return (
     <div className="space-y-6">
@@ -186,10 +162,10 @@ export function ReportViewer({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Filter className="h-5 w-5" />
-            Report Viewer
+            Lihat Laporan
           </CardTitle>
           <CardDescription>
-            Select a template and time period to view aggregated report data
+            Pilih template dan periode waktu untuk melihat data laporan teragregasi
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -205,7 +181,7 @@ export function ReportViewer({
                 }}
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select template" />
+                  <SelectValue placeholder="Pilih template" />
                 </SelectTrigger>
                 <SelectContent>
                   {templates.map((template) => (
@@ -219,7 +195,7 @@ export function ReportViewer({
 
             {/* Year Select */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">Year</label>
+              <label className="text-sm font-medium">Tahun</label>
               <Select
                 value={selectedYear.toString()}
                 onValueChange={(v) => setSelectedYear(parseInt(v))}
@@ -239,7 +215,7 @@ export function ReportViewer({
 
             {/* Month Select */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">Month</label>
+              <label className="text-sm font-medium">Bulan</label>
               <Select
                 value={selectedMonth?.toString() || "all"}
                 onValueChange={(v) =>
@@ -250,7 +226,7 @@ export function ReportViewer({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Months</SelectItem>
+                  <SelectItem value="all">Semua Bulan</SelectItem>
                   {MONTHS.map((month, index) => (
                     <SelectItem key={index} value={(index + 1).toString()}>
                       {month}
@@ -262,7 +238,7 @@ export function ReportViewer({
 
             {/* Room Select */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">Room</label>
+              <label className="text-sm font-medium">Ruangan</label>
               <Select
                 value={selectedRoomId || "all"}
                 onValueChange={(v) =>
@@ -270,10 +246,10 @@ export function ReportViewer({
                 }
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="All Rooms" />
+                  <SelectValue placeholder="Semua Ruangan" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Rooms</SelectItem>
+                  <SelectItem value="all">Semua Ruangan</SelectItem>
                   {filteredRooms.map((room) => (
                     <SelectItem key={room.id} value={room.id}>
                       {room.name}
@@ -285,13 +261,13 @@ export function ReportViewer({
 
             {/* Search Button */}
             <div className="space-y-2">
-              <label className="text-sm font-medium invisible">Search</label>
+              <label className="text-sm font-medium invisible">Cari</label>
               <Button
                 onClick={handleSearch}
                 disabled={!selectedTemplateId || isLoading}
                 className="w-full"
               >
-                {isLoading ? "Loading..." : "Search Reports"}
+                {isLoading ? "Memuat..." : "Cari Laporan"}
               </Button>
             </div>
           </div>
@@ -310,7 +286,7 @@ export function ReportViewer({
                     <Calendar className="h-6 w-6 text-primary" />
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Total Reports</p>
+                    <p className="text-sm text-muted-foreground">Total Laporan</p>
                     <p className="text-2xl font-bold">{reports.length}</p>
                   </div>
                 </div>
@@ -320,10 +296,10 @@ export function ReportViewer({
               <CardContent className="pt-6">
                 <div className="flex items-center gap-4">
                   <div className="p-3 rounded-lg bg-green-500/10">
-                    <TrendingUp className="h-6 w-6 text-green-500" />
+                    <CheckCircle2 className="h-6 w-6 text-green-500" />
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Submitted</p>
+                    <p className="text-sm text-muted-foreground">Terkirim</p>
                     <p className="text-2xl font-bold">
                       {reports.filter((r) => r.status === "submitted").length}
                     </p>
@@ -338,7 +314,7 @@ export function ReportViewer({
                     <Eye className="h-6 w-6 text-yellow-500" />
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Drafts</p>
+                    <p className="text-sm text-muted-foreground">Draf</p>
                     <p className="text-2xl font-bold">
                       {reports.filter((r) => r.status === "draft").length}
                     </p>
@@ -350,12 +326,12 @@ export function ReportViewer({
               <CardContent className="pt-6">
                 <div className="flex items-center gap-4">
                   <div className="p-3 rounded-lg bg-blue-500/10">
-                    <BarChart3 className="h-6 w-6 text-blue-500" />
+                    <Calendar className="h-6 w-6 text-blue-500" />
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Period</p>
+                    <p className="text-sm text-muted-foreground">Periode</p>
                     <p className="text-lg font-bold">
-                      {selectedMonth ? MONTHS[selectedMonth - 1] : "All"} {selectedYear}
+                      {selectedMonth ? MONTHS[selectedMonth - 1] : "Semua"} {selectedYear}
                     </p>
                   </div>
                 </div>
@@ -363,65 +339,27 @@ export function ReportViewer({
             </Card>
           </div>
 
-          {/* View Tabs */}
+          {/* Results Table */}
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle>{selectedTemplate.name}</CardTitle>
                 <div className="flex gap-2">
                   <Badge variant="outline">
-                    {selectedTemplate.type === "simple_list" ? "Simple List" : "Matrix"}
+                    {selectedTemplate.type === "simple_list" ? "Daftar Sederhana" : "Matriks"}
                   </Badge>
                   <Badge variant="secondary">
-                    {selectedTemplate.periodType === "daily" ? "Daily" : "Monthly"}
+                    {selectedTemplate.periodType === "daily" ? "Harian" : "Bulanan"}
                   </Badge>
                 </div>
               </div>
             </CardHeader>
             <CardContent>
-              <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as any)}>
-                <TabsList className="mb-4">
-                  <TabsTrigger value="table">
-                    <Table2 className="h-4 w-4 mr-2" />
-                    Table View
-                  </TabsTrigger>
-                  <TabsTrigger value="chart">
-                    <BarChart3 className="h-4 w-4 mr-2" />
-                    Chart View
-                  </TabsTrigger>
-                  <TabsTrigger value="summary">
-                    <TrendingUp className="h-4 w-4 mr-2" />
-                    Summary
-                  </TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="table">
-                  <ReportTableView
-                    schema={selectedTemplate.schema}
-                    reports={reports}
-                    periodType={selectedTemplate.periodType}
-                  />
-                </TabsContent>
-
-                <TabsContent value="chart">
-                  {aggregatedData && (
-                    <ReportChartView
-                      schema={selectedTemplate.schema}
-                      aggregatedData={aggregatedData}
-                    />
-                  )}
-                </TabsContent>
-
-                <TabsContent value="summary">
-                  {aggregatedData && (
-                    <ReportSummaryView
-                      schema={selectedTemplate.schema}
-                      aggregatedData={aggregatedData}
-                      reports={reports}
-                    />
-                  )}
-                </TabsContent>
-              </Tabs>
+              <ReportTableView
+                schema={selectedTemplate.schema}
+                reports={reports}
+                periodType={selectedTemplate.periodType}
+              />
             </CardContent>
           </Card>
         </>
@@ -433,10 +371,10 @@ export function ReportViewer({
           <CardContent className="py-12 text-center">
             <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
             <p className="text-muted-foreground">
-              No reports found for the selected criteria.
+              Tidak ada laporan ditemukan untuk kriteria yang dipilih.
             </p>
             <p className="text-sm text-muted-foreground mt-2">
-              Try adjusting your filters or selecting a different time period.
+              Coba sesuaikan filter atau pilih periode waktu yang berbeda.
             </p>
           </CardContent>
         </Card>
@@ -458,44 +396,13 @@ function ReportTableView({
   reports: ReportData[];
   periodType: string;
 }) {
-  const [tableViewMode, setTableViewMode] = useState<"individual" | "combined">("combined");
-
   return (
     <div className="space-y-4">
-      <Tabs value={tableViewMode} onValueChange={(v) => setTableViewMode(v as any)}>
-        <TabsList>
-          <TabsTrigger value="combined">
-            Combined Values
-          </TabsTrigger>
-          <TabsTrigger value="individual">
-            Individual Reports
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="combined" className="mt-4">
-          {schema.type === "simple_list" ? (
-            <SimpleListCombinedView schema={schema} reports={reports} />
-          ) : (
-            <MatrixCombinedView schema={schema} reports={reports} />
-          )}
-        </TabsContent>
-
-        <TabsContent value="individual" className="mt-4">
-          {schema.type === "simple_list" ? (
-            <SimpleListTableView
-              schema={schema}
-              reports={reports}
-              periodType={periodType}
-            />
-          ) : (
-            <MatrixTableView
-              schema={schema}
-              reports={reports}
-              periodType={periodType}
-            />
-          )}
-        </TabsContent>
-      </Tabs>
+      {schema.type === "simple_list" ? (
+        <SimpleListCombinedView schema={schema} reports={reports} />
+      ) : (
+        <MatrixCombinedView schema={schema} reports={reports} />
+      )}
     </div>
   );
 }
@@ -522,8 +429,8 @@ function SimpleListTableView({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="sticky left-0 bg-background">Period</TableHead>
-            <TableHead>Room</TableHead>
+            <TableHead className="sticky left-0 bg-background">Periode</TableHead>
+            <TableHead>Ruangan</TableHead>
             {schema.rows.map((row) => (
               <TableHead key={row.id} className="text-center min-w-[100px]">
                 {row.label}
@@ -579,9 +486,9 @@ function MatrixTableView({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="sticky left-0 bg-background">Period</TableHead>
-            <TableHead>Room</TableHead>
-            <TableHead>Service</TableHead>
+            <TableHead className="sticky left-0 bg-background">Periode</TableHead>
+            <TableHead>Ruangan</TableHead>
+            <TableHead>Layanan</TableHead>
             {leafColumns.map((col) => (
               <TableHead key={col.id} className="text-center min-w-[80px]">
                 {col.label}
@@ -662,26 +569,12 @@ function SimpleListCombinedView({
     return totals;
   }, [schema, reports]);
 
-  // Calculate grand total
-  const grandTotal = useMemo(() => {
-    let total = 0;
-    Object.values(combinedData).forEach((row) => {
-      Object.values(row).forEach((val) => {
-        total += val;
-      });
-    });
-    return total;
-  }, [combinedData]);
-
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
           Combined data from {reports.length} report(s)
         </p>
-        <Badge variant="secondary" className="text-lg px-3 py-1">
-          Total: {grandTotal.toLocaleString()}
-        </Badge>
       </div>
 
       <div className="overflow-x-auto">
@@ -689,7 +582,7 @@ function SimpleListCombinedView({
           <TableHeader>
             <TableRow>
               <TableHead className="w-12">No</TableHead>
-              <TableHead>Category</TableHead>
+              <TableHead>Kategori</TableHead>
               {schema.valueColumns.map((col) => (
                 <TableHead key={col.id} className="text-center min-w-[120px]">
                   {col.label}
@@ -699,7 +592,6 @@ function SimpleListCombinedView({
           </TableHeader>
           <TableBody>
             {schema.rows.map((row, index) => {
-              const rowTotal = Object.values(combinedData[row.id] || {}).reduce((a, b) => a + b, 0);
               return (
                 <TableRow key={row.id}>
                   <TableCell className="font-medium">{index + 1}</TableCell>
@@ -712,21 +604,6 @@ function SimpleListCombinedView({
                 </TableRow>
               );
             })}
-            {/* Total Row */}
-            <TableRow className="bg-muted/50 font-bold">
-              <TableCell colSpan={2}>TOTAL</TableCell>
-              {schema.valueColumns.map((col) => {
-                const colTotal = schema.rows.reduce(
-                  (sum, row) => sum + (combinedData[row.id]?.[col.id] || 0),
-                  0
-                );
-                return (
-                  <TableCell key={col.id} className="text-center font-mono">
-                    {colTotal.toLocaleString()}
-                  </TableCell>
-                );
-              })}
-            </TableRow>
           </TableBody>
         </Table>
       </div>
@@ -770,26 +647,12 @@ function MatrixCombinedView({
     return totals;
   }, [schema, reports, leafColumns]);
 
-  // Calculate grand total
-  const grandTotal = useMemo(() => {
-    let total = 0;
-    Object.values(combinedData).forEach((row) => {
-      Object.values(row).forEach((val) => {
-        total += val;
-      });
-    });
-    return total;
-  }, [combinedData]);
-
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
           Combined data from {reports.length} report(s)
         </p>
-        <Badge variant="secondary" className="text-lg px-3 py-1">
-          Total: {grandTotal.toLocaleString()}
-        </Badge>
       </div>
 
       <div className="overflow-x-auto">
@@ -812,7 +675,7 @@ function MatrixCombinedView({
                         rowSpan={headerRows.length}
                         className="min-w-[180px]"
                       >
-                        Service Type
+                        Jenis Layanan
                       </TableHead>
                     )}
                     {row.map((cell, cellIndex) => (
@@ -828,38 +691,23 @@ function MatrixCombinedView({
                         {cell.label}
                       </TableHead>
                     ))}
-                    {rowIndex === 0 && (
-                      <TableHead
-                        rowSpan={headerRows.length}
-                        className="text-center min-w-[100px] bg-primary/10"
-                      >
-                        Row Total
-                      </TableHead>
-                    )}
                   </TableRow>
                 ))}
               </>
             ) : (
-              <TableRow>
-                <TableHead className="w-12 text-center">No</TableHead>
-                <TableHead className="min-w-[180px]">Service Type</TableHead>
-                {leafColumns.map((col) => (
-                  <TableHead key={col.id} className="text-center min-w-[80px]">
-                    {col.label}
-                  </TableHead>
-                ))}
-                <TableHead className="text-center min-w-[100px] bg-primary/10">
-                  Row Total
+            <TableRow>
+              <TableHead className="w-12 text-center">No</TableHead>
+              <TableHead className="min-w-[180px]">Jenis Layanan</TableHead>
+              {leafColumns.map((col) => (
+                <TableHead key={col.id} className="text-center min-w-[80px]">
+                  {col.label}
                 </TableHead>
-              </TableRow>
+              ))}
+            </TableRow>
             )}
           </TableHeader>
           <TableBody>
             {schema.rows.map((row, index) => {
-              const rowTotal = Object.values(combinedData[row.id] || {}).reduce(
-                (a, b) => a + b,
-                0
-              );
               return (
                 <TableRow key={row.id}>
                   <TableCell className="text-center font-medium">
@@ -878,39 +726,16 @@ function MatrixCombinedView({
                       {(combinedData[row.id]?.[col.id] || 0).toLocaleString()}
                     </TableCell>
                   ))}
-                  <TableCell className="text-center font-mono font-bold bg-primary/5">
-                    {rowTotal.toLocaleString()}
-                  </TableCell>
                 </TableRow>
               );
             })}
-            {/* Total Row */}
-            <TableRow className="bg-muted/50 font-bold">
-              <TableCell colSpan={2} className="text-right">
-                COLUMN TOTAL
-              </TableCell>
-              {leafColumns.map((col) => {
-                const colTotal = schema.rows.reduce(
-                  (sum, row) => sum + (combinedData[row.id]?.[col.id] || 0),
-                  0
-                );
-                return (
-                  <TableCell key={col.id} className="text-center font-mono">
-                    {colTotal.toLocaleString()}
-                  </TableCell>
-                );
-              })}
-              <TableCell className="text-center font-mono bg-primary/10">
-                {grandTotal.toLocaleString()}
-              </TableCell>
-            </TableRow>
           </TableBody>
         </Table>
       </div>
 
       {schema.notes && schema.notes.length > 0 && (
         <div className="text-sm space-y-1 mt-4 p-4 bg-muted/30 rounded-lg">
-          <p className="font-semibold">Notes:</p>
+          <p className="font-semibold">Catatan:</p>
           {schema.notes.map((note, index) => (
             <p key={index} className="text-muted-foreground">
               {note}
@@ -960,279 +785,4 @@ function buildHeaderRows(
 
   processColumns(columns, 0);
   return rows;
-}
-
-// ============================================
-// Chart View Component
-// ============================================
-
-function ReportChartView({
-  schema,
-  aggregatedData,
-}: {
-  schema: TemplateSchema;
-  aggregatedData: AggregatedData;
-}) {
-  const chartConfig = useMemo(() => {
-    const config: Record<string, { label: string; color: string }> = {};
-    aggregatedData.labels.forEach((label, index) => {
-      config[label] = {
-        label,
-        color: CHART_COLORS[index % CHART_COLORS.length],
-      };
-    });
-    return config;
-  }, [aggregatedData]);
-
-  return (
-    <div className="space-y-6">
-      {/* Bar Chart */}
-      <div className="h-[400px]">
-        <ChartContainer config={chartConfig} className="h-full w-full">
-          <BarChart data={aggregatedData.chartData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis
-              dataKey="name"
-              angle={-45}
-              textAnchor="end"
-              height={80}
-              interval={0}
-              tick={{ fontSize: 10 }}
-            />
-            <YAxis />
-            <ChartTooltip content={<ChartTooltipContent />} />
-            <Bar dataKey="value" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-          </BarChart>
-        </ChartContainer>
-      </div>
-
-      {/* Trend Line Chart (if multiple periods) */}
-      {aggregatedData.trendData && aggregatedData.trendData.length > 1 && (
-        <div className="h-[300px]">
-          <h3 className="text-lg font-semibold mb-4">Trend Over Time</h3>
-          <ChartContainer config={chartConfig} className="h-full w-full">
-            <LineChart data={aggregatedData.trendData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="period" />
-              <YAxis />
-              <ChartTooltip content={<ChartTooltipContent />} />
-              <Line
-                type="monotone"
-                dataKey="total"
-                stroke="hsl(var(--primary))"
-                strokeWidth={2}
-                dot={{ fill: "hsl(var(--primary))" }}
-              />
-            </LineChart>
-          </ChartContainer>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ============================================
-// Summary View Component
-// ============================================
-
-function ReportSummaryView({
-  schema,
-  aggregatedData,
-  reports,
-}: {
-  schema: TemplateSchema;
-  aggregatedData: AggregatedData;
-  reports: ReportData[];
-}) {
-  // Get top items
-  const topItems = [...aggregatedData.chartData]
-    .sort((a, b) => b.value - a.value)
-    .slice(0, 5);
-
-  const totalValue = aggregatedData.chartData.reduce((sum, item) => sum + item.value, 0);
-
-  return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      {/* Total Summary */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Total Summary</CardTitle>
-          <CardDescription>
-            Aggregated totals from {reports.length} report(s)
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="text-4xl font-bold text-primary mb-4">
-            {totalValue.toLocaleString()}
-          </div>
-          <p className="text-sm text-muted-foreground">
-            Total across all categories
-          </p>
-        </CardContent>
-      </Card>
-
-      {/* Top Items */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Top 5 Categories</CardTitle>
-          <CardDescription>Highest values by category</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {topItems.map((item, index) => (
-              <div key={item.name} className="flex items-center gap-4">
-                <span className="text-2xl font-bold text-muted-foreground w-8">
-                  {index + 1}
-                </span>
-                <div className="flex-1">
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="font-medium text-sm">{item.name}</span>
-                    <span className="text-sm text-muted-foreground">
-                      {item.value.toLocaleString()}
-                    </span>
-                  </div>
-                  <div className="h-2 bg-muted rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-primary rounded-full"
-                      style={{
-                        width: `${(item.value / (topItems[0]?.value || 1)) * 100}%`,
-                      }}
-                    />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Detailed Breakdown */}
-      <Card className="lg:col-span-2">
-        <CardHeader>
-          <CardTitle>Detailed Breakdown</CardTitle>
-          <CardDescription>All categories with their totals</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {aggregatedData.chartData.map((item) => (
-              <div
-                key={item.name}
-                className="p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
-              >
-                <p className="text-sm text-muted-foreground truncate" title={item.name}>
-                  {item.name}
-                </p>
-                <p className="text-xl font-bold">{item.value.toLocaleString()}</p>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
-// ============================================
-// Data Aggregation Helpers
-// ============================================
-
-interface AggregatedData {
-  chartData: Array<{ name: string; value: number }>;
-  trendData?: Array<{ period: string; total: number }>;
-  labels: string[];
-}
-
-function aggregateSimpleListData(
-  schema: SimpleListTemplateSchema,
-  reports: ReportData[]
-): AggregatedData {
-  const totals: Record<string, number> = {};
-  const periodTotals: Record<string, number> = {};
-
-  // Initialize totals for all rows
-  schema.rows.forEach((row) => {
-    totals[row.label] = 0;
-  });
-
-  // Aggregate data from all reports
-  reports.forEach((report) => {
-    let reportTotal = 0;
-    schema.rows.forEach((row) => {
-      schema.valueColumns.forEach((col) => {
-        const value = parseInt(report.data?.[row.id]?.[col.id] || "0", 10);
-        totals[row.label] += value;
-        reportTotal += value;
-      });
-    });
-
-    // Track period totals
-    const periodKey = report.periodDay
-      ? `${report.periodDay}/${report.periodMonth}`
-      : `${MONTHS[report.periodMonth - 1]}`;
-    periodTotals[periodKey] = (periodTotals[periodKey] || 0) + reportTotal;
-  });
-
-  const chartData = schema.rows.map((row) => ({
-    name: row.label,
-    value: totals[row.label],
-  }));
-
-  const trendData = Object.entries(periodTotals).map(([period, total]) => ({
-    period,
-    total,
-  }));
-
-  return {
-    chartData,
-    trendData,
-    labels: schema.rows.map((r) => r.label),
-  };
-}
-
-function aggregateMatrixData(
-  schema: MatrixTemplateSchema,
-  reports: ReportData[]
-): AggregatedData {
-  const leafColumns = getLeafColumns(schema.columns);
-  const totals: Record<string, number> = {};
-  const periodTotals: Record<string, number> = {};
-
-  // Initialize totals for all rows
-  schema.rows.forEach((row) => {
-    totals[row.label] = 0;
-  });
-
-  // Aggregate data from all reports
-  reports.forEach((report) => {
-    let reportTotal = 0;
-    schema.rows.forEach((row) => {
-      leafColumns.forEach((col) => {
-        const value = parseInt(report.data?.[row.id]?.[col.id] || "0", 10);
-        totals[row.label] += value;
-        reportTotal += value;
-      });
-    });
-
-    // Track period totals
-    const periodKey = report.periodDay
-      ? `${report.periodDay}/${report.periodMonth}`
-      : `${MONTHS[report.periodMonth - 1]}`;
-    periodTotals[periodKey] = (periodTotals[periodKey] || 0) + reportTotal;
-  });
-
-  const chartData = schema.rows.map((row) => ({
-    name: row.label,
-    value: totals[row.label],
-  }));
-
-  const trendData = Object.entries(periodTotals).map(([period, total]) => ({
-    period,
-    total,
-  }));
-
-  return {
-    chartData,
-    trendData,
-    labels: schema.rows.map((r) => r.label),
-  };
 }

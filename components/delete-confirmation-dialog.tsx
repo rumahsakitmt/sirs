@@ -53,7 +53,7 @@ export function DeleteConfirmationDialog({
           <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
+          <AlertDialogCancel disabled={isPending}>Batal</AlertDialogCancel>
           <AlertDialogAction
             onClick={handleConfirm}
             disabled={isPending}
@@ -62,10 +62,10 @@ export function DeleteConfirmationDialog({
             {isPending ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Deleting...
+                Menghapus...
               </>
             ) : (
-              "Delete"
+              "Hapus"
             )}
           </AlertDialogAction>
         </AlertDialogFooter>

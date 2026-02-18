@@ -24,7 +24,7 @@ export default function RegisterPage() {
     setError("");
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match");
+      setError("Kata sandi tidak cocok");
       return;
     }
 
@@ -39,13 +39,13 @@ export default function RegisterPage() {
       });
 
       if (result.error) {
-        setError(result.error.message || "Failed to create account");
+        setError(result.error.message || "Gagal membuat akun");
       } else {
         router.push("/login");
         router.refresh();
       }
     } catch (err) {
-      setError("An error occurred during registration");
+      setError("Terjadi kesalahan saat pendaftaran");
     } finally {
       setLoading(false);
     }
@@ -55,10 +55,10 @@ export default function RegisterPage() {
     <Card className="w-full max-w-md">
       <CardHeader className="space-y-1">
         <CardTitle className="text-2xl font-bold text-center">
-          Create Account
+          Buat Akun
         </CardTitle>
         <CardDescription className="text-center">
-          Register for SIRS
+          Daftar untuk SIRS
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -69,11 +69,11 @@ export default function RegisterPage() {
         )}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Full Name</Label>
+            <Label htmlFor="name">Nama Lengkap</Label>
             <Input
               id="name"
               type="text"
-              placeholder="John Doe"
+              placeholder="Nama Lengkap"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
@@ -84,14 +84,14 @@ export default function RegisterPage() {
             <Input
               id="email"
               type="email"
-              placeholder="name@hospital.com"
+              placeholder="nama@rumahsakit.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">Kata Sandi</Label>
             <Input
               id="password"
               type="password"
@@ -101,7 +101,7 @@ export default function RegisterPage() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Confirm Password</Label>
+            <Label htmlFor="confirmPassword">Konfirmasi Kata Sandi</Label>
             <Input
               id="confirmPassword"
               type="password"
@@ -114,17 +114,17 @@ export default function RegisterPage() {
             {loading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creating account...
+                Membuat akun...
               </>
             ) : (
-              "Create Account"
+              "Buat Akun"
             )}
           </Button>
         </form>
         <div className="mt-4 text-center text-sm">
-          Already have an account?{" "}
+          Sudah punya akun?{" "}
           <a href="/login" className="text-primary hover:underline">
-            Sign in
+            Masuk
           </a>
         </div>
       </CardContent>

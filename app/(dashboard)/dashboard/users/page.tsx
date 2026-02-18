@@ -44,9 +44,9 @@ export default async function UsersPage() {
   return (
     <div className="container mx-auto py-6">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold">User Management</h1>
+        <h1 className="text-3xl font-bold">Manajemen Pengguna</h1>
         <p className="text-muted-foreground">
-          Manage system users and their room assignments
+          Kelola pengguna sistem dan penugasan ruangan mereka
         </p>
       </div>
 
@@ -54,10 +54,10 @@ export default async function UsersPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="h-5 w-5" />
-            All Users
+            Semua Pengguna
           </CardTitle>
           <CardDescription>
-            {users.length} user{users.length !== 1 ? "s" : ""} registered
+            {users.length} pengguna terdaftar
           </CardDescription>
         </CardHeader>
         <CardContent>

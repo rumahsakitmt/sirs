@@ -42,7 +42,7 @@ export function UsersTable({ users, rooms, currentUserId }: UsersTableProps) {
     return (
       <div className="text-center py-12 text-muted-foreground">
         <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
-        <p>No users found</p>
+        <p>Tidak ada pengguna ditemukan</p>
       </div>
     );
   }
@@ -51,12 +51,12 @@ export function UsersTable({ users, rooms, currentUserId }: UsersTableProps) {
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Name</TableHead>
+          <TableHead>Nama</TableHead>
           <TableHead>Email</TableHead>
-          <TableHead>Role</TableHead>
-          <TableHead>Assigned Rooms</TableHead>
-          <TableHead>Joined</TableHead>
-          <TableHead className="text-right">Actions</TableHead>
+          <TableHead>Peran</TableHead>
+          <TableHead>Ruangan Ditugaskan</TableHead>
+          <TableHead>Bergabung</TableHead>
+          <TableHead className="text-right">Aksi</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -69,7 +69,7 @@ export function UsersTable({ users, rooms, currentUserId }: UsersTableProps) {
                 </div>
                 {user.name}
                 {user.id === currentUserId && (
-                  <Badge variant="outline" className="text-xs">You</Badge>
+                  <Badge variant="outline" className="text-xs">Anda</Badge>
                 )}
               </div>
             </TableCell>
@@ -102,7 +102,7 @@ export function UsersTable({ users, rooms, currentUserId }: UsersTableProps) {
                   )}
                 </div>
               ) : (
-                <span className="text-muted-foreground text-sm">No rooms</span>
+                <span className="text-muted-foreground text-sm">Tidak ada ruangan</span>
               )}
             </TableCell>
             <TableCell>

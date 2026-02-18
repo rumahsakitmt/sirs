@@ -47,7 +47,7 @@ export default function EditRoomPage({ params }: { params: Promise<{ id: string 
       router.push("/dashboard/rooms");
       router.refresh();
     } catch (err) {
-      setError("Failed to update room. Please try again.");
+      setError("Gagal memperbarui ruangan. Silakan coba lagi.");
       setFormLoading(false);
     }
   }
@@ -60,7 +60,7 @@ export default function EditRoomPage({ params }: { params: Promise<{ id: string 
       router.push("/dashboard/rooms");
       router.refresh();
     } catch (err) {
-      setError("Failed to delete room. Please try again.");
+      setError("Gagal menghapus ruangan. Silakan coba lagi.");
       setDeleteLoading(false);
     }
   }
@@ -74,16 +74,16 @@ export default function EditRoomPage({ params }: { params: Promise<{ id: string 
           </Button>
         </Link>
         <div>
-          <h1 className="text-3xl font-bold">Edit Room</h1>
+          <h1 className="text-3xl font-bold">Edit Ruangan</h1>
           <p className="text-muted-foreground">
-            Update room details
+            Perbarui detail ruangan
           </p>
         </div>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Room Details</CardTitle>
+          <CardTitle>Detail Ruangan</CardTitle>
         </CardHeader>
         <CardContent>
           <form action={handleSubmit} className="space-y-6">
@@ -95,22 +95,22 @@ export default function EditRoomPage({ params }: { params: Promise<{ id: string 
 
             <div className="space-y-2">
               <Label htmlFor="name">
-                Room Name <span className="text-destructive">*</span>
+                Nama Ruangan <span className="text-destructive">*</span>
               </Label>
               <Input
                 id="name"
                 name="name"
-                placeholder="e.g., Rawat Inap, Radiologi"
+                placeholder="contoh: Rawat Inap, Radiologi"
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="description">Deskripsi</Label>
               <Textarea
                 id="description"
                 name="description"
-                placeholder="Brief description of this room/department"
+                placeholder="Deskripsi singkat ruangan/departemen ini"
                 rows={3}
               />
             </div>
@@ -120,19 +120,19 @@ export default function EditRoomPage({ params }: { params: Promise<{ id: string 
                 <AlertDialogTrigger asChild>
                   <Button type="button" variant="destructive">
                     <Trash2 className="mr-2 h-4 w-4" />
-                    Delete Room
+                    Hapus Ruangan
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                    <AlertDialogTitle>Apakah Anda yakin?</AlertDialogTitle>
                     <AlertDialogDescription>
-                      This will permanently delete this room and all associated templates and reports.
-                      This action cannot be undone.
+                      Tindakan ini akan menghapus ruangan ini beserta semua template dan laporan terkait secara permanen.
+                      Tindakan ini tidak dapat dibatalkan.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogCancel>Batal</AlertDialogCancel>
                     <AlertDialogAction
                       onClick={handleDelete}
                       disabled={deleteLoading}
@@ -143,7 +143,7 @@ export default function EditRoomPage({ params }: { params: Promise<{ id: string 
                       ) : (
                         <Trash2 className="mr-2 h-4 w-4" />
                       )}
-                      Delete
+                      Hapus
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
@@ -152,19 +152,19 @@ export default function EditRoomPage({ params }: { params: Promise<{ id: string 
               <div className="flex gap-3">
                 <Link href="/dashboard/rooms">
                   <Button type="button" variant="outline">
-                    Cancel
+                    Batal
                   </Button>
                 </Link>
                 <Button type="submit" disabled={formLoading}>
                   {formLoading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Saving...
+                      Menyimpan...
                     </>
                   ) : (
                     <>
                       <Save className="mr-2 h-4 w-4" />
-                      Save Changes
+                      Simpan Perubahan
                     </>
                   )}
                 </Button>

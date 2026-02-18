@@ -23,7 +23,7 @@ export default function NewRoomPage() {
     setError("");
 
     if (!name.trim()) {
-      setError("Room name is required");
+      setError("Nama ruangan wajib diisi");
       return;
     }
 
@@ -33,7 +33,7 @@ export default function NewRoomPage() {
       router.push("/dashboard/rooms");
       router.refresh();
     } catch (err) {
-      setError("Failed to create room. Please try again.");
+      setError("Gagal membuat ruangan. Silakan coba lagi.");
     } finally {
       setLoading(false);
     }
@@ -48,16 +48,16 @@ export default function NewRoomPage() {
           </Button>
         </Link>
         <div>
-          <h1 className="text-3xl font-bold">Add New Room</h1>
+          <h1 className="text-3xl font-bold">Tambah Ruangan Baru</h1>
           <p className="text-muted-foreground">
-            Create a new department or room
+            Buat departemen atau ruangan baru
           </p>
         </div>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Room Details</CardTitle>
+          <CardTitle>Detail Ruangan</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -69,24 +69,24 @@ export default function NewRoomPage() {
 
             <div className="space-y-2">
               <Label htmlFor="name">
-                Room Name <span className="text-destructive">*</span>
+                Nama Ruangan <span className="text-destructive">*</span>
               </Label>
               <Input
                 id="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="e.g., Rawat Inap, Radiologi"
+                placeholder="contoh: Rawat Inap, Radiologi"
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="description">Deskripsi</Label>
               <Textarea
                 id="description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Brief description of this room/department"
+                placeholder="Deskripsi singkat ruangan/departemen ini"
                 rows={3}
               />
             </div>
@@ -94,19 +94,19 @@ export default function NewRoomPage() {
             <div className="flex justify-end gap-3">
               <Link href="/dashboard/rooms">
                 <Button type="button" variant="outline">
-                  Cancel
+                  Batal
                 </Button>
               </Link>
               <Button type="submit" disabled={loading}>
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating...
+                    Membuat...
                   </>
                 ) : (
                   <>
                     <Plus className="mr-2 h-4 w-4" />
-                    Create Room
+                    Buat Ruangan
                   </>
                 )}
               </Button>

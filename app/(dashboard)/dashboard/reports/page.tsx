@@ -41,23 +41,23 @@ export default async function ReportsPage() {
     <div className="container mx-auto py-6">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-3xl font-bold">Reports</h1>
+          <h1 className="text-3xl font-bold">Laporan</h1>
           <p className="text-muted-foreground">
-            View and manage your submitted reports
+            Lihat dan kelola laporan yang telah dikirim
           </p>
         </div>
         <div className="flex gap-2">
           <Link href="/dashboard/reports/viewer">
             <Button variant="outline">
               <BarChart3 className="mr-2 h-4 w-4" />
-              View Reports
+              Lihat Laporan
             </Button>
           </Link>
           {(isAdmin || userRooms.length > 0) && (
             <Link href="/dashboard/reports/new">
               <Button>
                 <Plus className="mr-2 h-4 w-4" />
-                New Report
+                Laporan Baru
               </Button>
             </Link>
           )}
@@ -66,22 +66,22 @@ export default async function ReportsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>All Reports</CardTitle>
+          <CardTitle>Semua Laporan</CardTitle>
           <CardDescription>
-            {reports.length} report{reports.length !== 1 ? "s" : ""} found
+            {reports.length} laporan ditemukan
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Period</TableHead>
-                <TableHead>Room</TableHead>
+                <TableHead>Periode</TableHead>
+                <TableHead>Ruangan</TableHead>
                 <TableHead>Template</TableHead>
-                {isAdmin && <TableHead>Created By</TableHead>}
+                {isAdmin && <TableHead>Dibuat Oleh</TableHead>}
                 <TableHead>Status</TableHead>
-                <TableHead>Submitted</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead>Terkirim</TableHead>
+                <TableHead className="text-right">Aksi</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -101,7 +101,7 @@ export default async function ReportsPage() {
                         report.status === "submitted" ? "default" : "secondary"
                       }
                     >
-                      {report.status === "submitted" ? "Submitted" : "Draft"}
+                      {report.status === "submitted" ? "Terkirim" : "Draf"}
                     </Badge>
                   </TableCell>
                   <TableCell>
@@ -138,16 +138,16 @@ export default async function ReportsPage() {
           {reports.length === 0 && (
             <div className="text-center py-12 text-muted-foreground">
               <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>No reports found.</p>
+              <p>Tidak ada laporan ditemukan.</p>
               {isAdmin || userRooms.length > 0 ? (
                 <Link href="/dashboard/reports/new">
                   <Button variant="outline" className="mt-4">
-                    Create your first report
+                    Buat laporan pertama
                   </Button>
                 </Link>
               ) : (
                 <p className="text-sm mt-2">
-                  You need to be assigned to a room to create reports.
+                  Anda perlu ditugaskan ke ruangan untuk membuat laporan.
                 </p>
               )}
             </div>
