@@ -308,6 +308,12 @@ export function DynamicReportForm({
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [isEditing, setIsEditing] = useState(false);
 
+  // Update data when initialData changes (e.g., when switching dates)
+  useEffect(() => {
+    setData(initialData || {});
+    setIsEditing(false);
+  }, [initialData, periodYear, periodMonth, periodDay, templateId]);
+
   const isSubmitted = status === "submitted";
   const isReadOnly = isSubmitted && !isEditing;
 
@@ -359,7 +365,7 @@ export function DynamicReportForm({
               {isSubmitted && (
                 <Badge
                   variant="default"
-                  className="bg-green-100 text-green-800 border-green-300"
+                  className="bg-blue-100 text-blue-800 border-blue-300"
                 >
                   <CheckCircle className="h-3 w-3 mr-1" />
                   Terkirim
@@ -373,12 +379,12 @@ export function DynamicReportForm({
                 </p>
               )}
               {isSubmitted && !isEditing && (
-                <p className="text-sm text-green-600">
+                <p className="text-sm text-blue-600">
                   Laporan ini telah dikirim. Klik Edit untuk membuat perubahan.
                 </p>
               )}
               {isEditing && (
-                <p className="text-sm text-blue-600">
+                <p className="text-sm text-orange-600">
                   Mode edit - Buat perubahan dan klik Simpan atau Kirim
                 </p>
               )}
