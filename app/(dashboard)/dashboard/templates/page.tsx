@@ -82,12 +82,22 @@ export default async function TemplatesPage() {
                   <TableCell>{template.room?.name || "-"}</TableCell>
                   <TableCell>
                     <Badge variant="outline">
-                      {template.type === "simple_list" ? "Daftar Sederhana" : "Matriks"}
+                      {template.type === "simple_list"
+                        ? "Daftar Sederhana"
+                        : "Matriks"}
                     </Badge>
                   </TableCell>
-                  <TableCell className="capitalize">{template.periodType === "daily" ? "Harian" : "Bulanan"}</TableCell>
+                  <TableCell className="capitalize">
+                    {template.periodType === "daily"
+                      ? "Harian"
+                      : template.periodType === "monthly"
+                        ? "Bulanan"
+                        : "Tahunan"}
+                  </TableCell>
                   <TableCell>
-                    <Badge variant={template.isActive ? "default" : "secondary"}>
+                    <Badge
+                      variant={template.isActive ? "default" : "secondary"}
+                    >
                       {template.isActive ? "Aktif" : "Tidak Aktif"}
                     </Badge>
                   </TableCell>
@@ -95,9 +105,9 @@ export default async function TemplatesPage() {
                     {new Date(template.createdAt).toLocaleDateString()}
                   </TableCell>
                   <TableCell className="text-right">
-                    <TemplateActions 
-                      templateId={template.id} 
-                      templateName={template.name} 
+                    <TemplateActions
+                      templateId={template.id}
+                      templateName={template.name}
                     />
                   </TableCell>
                 </TableRow>
