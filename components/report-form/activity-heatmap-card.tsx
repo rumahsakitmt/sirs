@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { ReportHeatmap } from "@/components/report-form/report-heatmap";
 import { formatTanggal, formatBulanTahun } from "@/lib/report-utils";
 import type { Report } from "@/lib/report-utils";
+import type { PeriodType } from "@/lib/template-types";
 import { RotateCcw } from "lucide-react";
 
 interface ActivityHeatmapCardProps {
@@ -10,6 +11,7 @@ interface ActivityHeatmapCardProps {
   currentMonth: number;
   selectedDate: Date;
   isViewingToday: boolean;
+  periodType?: PeriodType;
   onDayClick: (date: Date) => void;
   onBackToToday: () => void;
 }
@@ -20,6 +22,7 @@ export function ActivityHeatmapCard({
   currentMonth,
   selectedDate,
   isViewingToday,
+  periodType = "daily",
   onDayClick,
   onBackToToday,
 }: ActivityHeatmapCardProps) {
@@ -50,13 +53,14 @@ export function ActivityHeatmapCard({
         reports={reports}
         year={currentYear}
         month={currentMonth}
+        periodType={periodType}
         onDayClick={onDayClick}
         selectedDate={selectedDate}
       />
       <p className="text-xs text-muted-foreground">
         {isViewingToday
-          ? "Klik pada tanggal untuk mengisi laporan yang belum terisi. Menampilkan laporan yang sudah dikirim bulan ini."
-          : `Melihat laporan untuk ${formatTanggal(selectedDate)}. Klik "Kembali ke Hari Ini" untuk kembali ke tanggal saat ini.`}
+          ? "Klik pada periode untuk mengisi laporan yang belum terisi. Menampilkan laporan yang sudah dikirim."
+          : `Melihat laporan untuk ${formatTanggal(selectedDate)}. Klik \"Kembali ke Hari Ini\" untuk kembali ke periode saat ini.`}
       </p>
     </div>
   );

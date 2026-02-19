@@ -7,6 +7,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import type { PeriodType } from "@/lib/template-types";
 
 interface Report {
   id: string;
@@ -21,14 +22,21 @@ interface ReportHeatmapProps {
   reports: Report[];
   year?: number;
   month?: number;
+  periodType?: PeriodType;
   onDayClick?: (date: Date) => void;
   selectedDate?: Date;
 }
+
+const MONTHS = [
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+];
 
 export function ReportHeatmap({
   reports,
   year,
   month,
+  periodType = "daily",
   onDayClick,
   selectedDate,
 }: ReportHeatmapProps) {
@@ -36,31 +44,73 @@ export function ReportHeatmap({
   const targetYear = year ?? currentDate.getFullYear();
   const targetMonth = month ?? currentDate.getMonth() + 1;
 
-  // Get all days in the target month
-  const daysInMonth = useMemo(() => {
-    const days: Date[] = [];
-    const lastDay = new Date(targetYear, targetMonth, 0);
-
-    for (let day = 1; day <= lastDay.getDate(); day++) {
-      days.push(new Date(targetYear, targetMonth - 1, day));
+  // Get time units based on period type
+  const timeUnits = useMemo(() => {
+    if (periodType === "yearly") {
+      // Show last 5 years
+      const years: { label: string; value: number; date: Date }[] = [];
+      for (let i = 4; i >= 0; i--) {
+        const y = targetYear - i;
+        years.push({
+          label: String(y),
+          value: y,
+          date: new Date(y, 0, 1),
+        });
+      }
+      return years;
+    } else if (periodType === "monthly") {
+      // Show all months in the target year
+      const months: { label: string; value: number; date: Date }[] = [];
+      for (let m = 1; m <= 12; m++) {
+        months.push({
+          label: MONTHS[m - 1],
+          value: m,
+          date: new Date(targetYear, m - 1, 1),
+        });
+      }
+      return months;
+    } else {
+      // Daily - show days in target month
+      const days: { label: string; value: number; date: Date }[] = [];
+      const lastDay = new Date(targetYear, targetMonth, 0);
+      for (let day = 1; day <= lastDay.getDate(); day++) {
+        days.push({
+          label: String(day),
+          value: day,
+          date: new Date(targetYear, targetMonth - 1, day),
+        });
+      }
+      return days;
     }
+  }, [targetYear, targetMonth, periodType]);
 
-    return days;
-  }, [targetYear, targetMonth]);
-
-  // Calculate report counts per day
+  // Calculate report counts based on period type
   const reportCounts = useMemo(() => {
     const counts = new Map<string, number>();
 
     reports.forEach((report) => {
-      if (report.status === "submitted" && report.periodDay) {
-        const dateKey = `${report.periodYear}-${String(report.periodMonth).padStart(2, "0")}-${String(report.periodDay).padStart(2, "0")}`;
-        counts.set(dateKey, (counts.get(dateKey) || 0) + 1);
+      if (report.status === "submitted") {
+        let key: string;
+        if (periodType === "yearly") {
+          // Count by year only
+          key = String(report.periodYear);
+        } else if (periodType === "monthly") {
+          // Count by year-month
+          key = `${report.periodYear}-${String(report.periodMonth).padStart(2, "0")}`;
+        } else {
+          // Daily - count by full date
+          if (report.periodDay) {
+            key = `${report.periodYear}-${String(report.periodMonth).padStart(2, "0")}-${String(report.periodDay).padStart(2, "0")}`;
+          } else {
+            return; // Skip reports without periodDay for daily view
+          }
+        }
+        counts.set(key, (counts.get(key) || 0) + 1);
       }
     });
 
     return counts;
-  }, [reports]);
+  }, [reports, periodType]);
 
   // Get max count for color scaling
   const maxCount = useMemo(() => {
@@ -79,24 +129,36 @@ export function ReportHeatmap({
   };
 
   const formatDate = (date: Date) => {
-    return date.toLocaleDateString("en-US", {
-      weekday: "long",
-      month: "long",
-      day: "numeric",
-      year: "numeric",
-    });
+    if (periodType === "yearly") {
+      return date.toLocaleDateString("en-US", { year: "numeric" });
+    } else if (periodType === "monthly") {
+      return date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+    } else {
+      return date.toLocaleDateString("en-US", {
+        weekday: "long",
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      });
+    }
   };
 
-  const isToday = (date: Date) => {
+  const isCurrentPeriod = (date: Date) => {
     const today = new Date();
-    return (
-      date.getDate() === today.getDate() &&
-      date.getMonth() === today.getMonth() &&
-      date.getFullYear() === today.getFullYear()
-    );
+    if (periodType === "yearly") {
+      return date.getFullYear() === today.getFullYear();
+    } else if (periodType === "monthly") {
+      return date.getFullYear() === today.getFullYear() && date.getMonth() === today.getMonth();
+    } else {
+      return (
+        date.getDate() === today.getDate() &&
+        date.getMonth() === today.getMonth() &&
+        date.getFullYear() === today.getFullYear()
+      );
+    }
   };
 
-  const isFutureDate = (date: Date) => {
+  const isFuturePeriod = (date: Date) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const checkDate = new Date(date);
@@ -104,49 +166,68 @@ export function ReportHeatmap({
     return checkDate > today;
   };
 
+  const getCountKey = (unit: { value: number; date: Date }) => {
+    if (periodType === "yearly") {
+      return String(unit.value);
+    } else if (periodType === "monthly") {
+      return `${targetYear}-${String(unit.value).padStart(2, "0")}`;
+    } else {
+      return `${unit.date.getFullYear()}-${String(unit.date.getMonth() + 1).padStart(2, "0")}-${String(unit.value).padStart(2, "0")}`;
+    }
+  };
+
+  const isSelected = (unit: { date: Date }) => {
+    if (!selectedDate) return false;
+    if (periodType === "yearly") {
+      return unit.date.getFullYear() === selectedDate.getFullYear();
+    } else if (periodType === "monthly") {
+      return unit.date.getFullYear() === selectedDate.getFullYear() && 
+             unit.date.getMonth() === selectedDate.getMonth();
+    } else {
+      return unit.date.getDate() === selectedDate.getDate() &&
+             unit.date.getMonth() === selectedDate.getMonth() &&
+             unit.date.getFullYear() === selectedDate.getFullYear();
+    }
+  };
+
   return (
     <TooltipProvider>
       <div className="w-full">
-        <div className="flex gap-1 overflow-x-auto p-2 ">
-          {daysInMonth.map((date) => {
-            const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-            const count = reportCounts.get(dateKey) || 0;
-            const today = isToday(date);
-            const future = isFutureDate(date);
-
-            const isSelected =
-              selectedDate &&
-              date.getDate() === selectedDate.getDate() &&
-              date.getMonth() === selectedDate.getMonth() &&
-              date.getFullYear() === selectedDate.getFullYear();
-
+        <div className="flex gap-1 overflow-x-auto p-2">
+          {timeUnits.map((unit) => {
+            const countKey = getCountKey(unit);
+            const count = reportCounts.get(countKey) || 0;
+            const current = isCurrentPeriod(unit.date);
+            const future = isFuturePeriod(unit.date);
+            const selected = isSelected(unit);
             const canClick = onDayClick && !future;
 
             return (
-              <Tooltip key={dateKey}>
+              <Tooltip key={countKey}>
                 <TooltipTrigger asChild>
                   <button
-                    onClick={() => canClick && onDayClick?.(date)}
+                    onClick={() => canClick && onDayClick?.(unit.date)}
                     disabled={future}
                     className={`
-                      w-8 h-8 rounded-md ${getColorClass(count)}
+                      ${periodType === "daily" ? "w-8 h-8" : "w-12 h-12"}
+                      rounded-md ${getColorClass(count)}
                       flex items-center justify-center shrink-0
                       transition-all duration-200
-                      ${today ? "ring-2 ring-primary" : ""}
-                      ${isSelected ? "ring-2 ring-green-500" : ""}
+                      ${current ? "ring-2 ring-primary" : ""}
+                      ${selected ? "ring-2 ring-green-500" : ""}
                       ${canClick ? "hover:ring-2 hover:ring-ring cursor-pointer" : "cursor-not-allowed opacity-60"}
                     `}
                   >
                     <span
                       className={`text-[10px] font-medium ${count > 0 ? "text-white" : "text-muted-foreground"}`}
                     >
-                      {date.getDate()}
+                      {unit.label}
                     </span>
                   </button>
                 </TooltipTrigger>
                 <TooltipContent side="top">
                   <div className="text-xs">
-                    <p className="font-medium">{formatDate(date)}</p>
+                    <p className="font-medium">{formatDate(unit.date)}</p>
                     <p>{count} laporan terkirim</p>
                     {canClick && count === 0 && (
                       <p className="text-blue-400 mt-1">

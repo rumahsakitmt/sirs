@@ -10,6 +10,7 @@ import { trpc } from "@/lib/trpc/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useDashboardReports } from "@/hooks/use-dashboard-reports";
 import { isSameDay, formatTanggal, formatBulanTahun } from "@/lib/report-utils";
+import type { PeriodType } from "@/lib/template-types";
 import { AlertCircle } from "lucide-react";
 
 export function DashboardReportForm() {
@@ -61,6 +62,17 @@ export function DashboardReportForm() {
   });
 
   const currentItem = allReportsToShow[currentIndex];
+  
+  // Get period type from current template
+  const currentPeriodType = useMemo<PeriodType>(() => {
+    if (!currentItem) return "daily";
+    const template = currentItem.type === "existing" 
+      ? currentItem.report?.template 
+      : currentItem.template;
+    const pt = template?.periodType;
+    if (pt === "daily" || pt === "monthly" || pt === "yearly") return pt;
+    return "daily";
+  }, [currentItem]);
 
   const handleSave = useCallback(
     async (
@@ -146,6 +158,7 @@ export function DashboardReportForm() {
       currentMonth={currentMonth}
       selectedDate={selectedDate}
       isViewingToday={isViewingToday}
+      periodType={currentPeriodType}
       onDayClick={handleDayClick}
       onBackToToday={handleBackToToday}
     />
