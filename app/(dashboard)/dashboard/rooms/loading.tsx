@@ -25,7 +25,7 @@ export default function RoomsLoading() {
               <Skeleton className="h-4 w-16 ml-auto" />
             </div>
             {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="flex gap-4 items-center py-3">
+              <div key={`skeleton-row-${i}`} className="flex gap-4 items-center py-3">
                 <Skeleton className="h-4 w-32" />
                 <Skeleton className="h-4 w-48" />
                 <div className="flex gap-2 ml-auto">

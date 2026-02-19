@@ -21,11 +21,11 @@ export default function TemplatesLoading() {
           <div className="space-y-4">
             <div className="flex gap-4 border-b pb-3">
               {[1, 2, 3, 4, 5, 6, 7].map((i) => (
-                <Skeleton key={i} className="h-4 w-16" />
+                <Skeleton key={`skeleton-header-${i}`} className="h-4 w-16" />
               ))}
             </div>
             {[1, 2, 3].map((i) => (
-              <div key={i} className="flex gap-4 items-center py-3">
+              <div key={`skeleton-row-${i}`} className="flex gap-4 items-center py-3">
                 <Skeleton className="h-4 w-40" />
                 <Skeleton className="h-4 w-24" />
                 <Skeleton className="h-6 w-20 rounded-full" />

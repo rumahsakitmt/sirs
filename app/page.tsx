@@ -4,6 +4,12 @@ import { auth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "SIRS",
+  description: "Sistem Informasi Rumah Sakit",
+};
 
 export default async function Page() {
   const session = await auth.api.getSession({

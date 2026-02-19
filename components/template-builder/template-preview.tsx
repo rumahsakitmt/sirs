@@ -234,7 +234,7 @@ function MatrixPreview({
         <div className="text-sm space-y-1">
           <p className="font-semibold">NB :</p>
           {schema.notes.map((note, index) => (
-            <p key={index} className="text-muted-foreground">{note}</p>
+            <p key={`note-${index}`} className="text-muted-foreground">{note}</p>
           ))}
         </div>
       )}

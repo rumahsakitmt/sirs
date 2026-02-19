@@ -308,10 +308,13 @@ export function DynamicReportForm({
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [isEditing, setIsEditing] = useState(false);
 
-  useEffect(() => {
+  const formKey = `${templateId}-${periodYear}-${periodMonth}-${periodDay}-${JSON.stringify(initialData)}`;
+  const [prevFormKey, setPrevFormKey] = useState(formKey);
+  if (formKey !== prevFormKey) {
+    setPrevFormKey(formKey);
     setData(initialData || {});
     setIsEditing(false);
-  }, [initialData, periodYear, periodMonth, periodDay, templateId]);
+  }
 
   const isSubmitted = status === "submitted";
   const isReadOnly = isSubmitted && !isEditing;
@@ -455,7 +458,7 @@ export function DynamicReportForm({
             <div className="text-sm space-y-1 mt-6">
               <p className="font-semibold">Catatan :</p>
               {schema.notes.map((note, index) => (
-                <p key={index} className="text-muted-foreground">
+                <p key={`note-${index}`} className="text-muted-foreground">
                   {note}
                 </p>
               ))}

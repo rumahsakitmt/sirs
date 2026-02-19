@@ -222,7 +222,7 @@ function MatrixPrintView({
         <div className="text-sm space-y-1 mt-6 print:mt-6">
           <p className="font-semibold">NB :</p>
           {schema.notes.map((note, index) => (
-            <p key={index}>{note}</p>
+            <p key={`note-${index}`}>{note}</p>
           ))}
         </div>
       )}

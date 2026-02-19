@@ -62,6 +62,12 @@ interface SortableColumnProps {
 
 function SortableColumn({ column, onRemove, onUpdate, depth = 0 }: SortableColumnProps) {
   const [isExpanded, setIsExpanded] = useState(true);
+  const childSensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
   const {
     attributes,
     listeners,
@@ -164,12 +170,7 @@ function SortableColumn({ column, onRemove, onUpdate, depth = 0 }: SortableColum
       {isExpanded && (
         <div className="p-3 space-y-2 bg-card">
           <DndContext
-            sensors={useSensors(
-              useSensor(PointerSensor),
-              useSensor(KeyboardSensor, {
-                coordinateGetter: sortableKeyboardCoordinates,
-              })
-            )}
+            sensors={childSensors}
             collisionDetection={closestCenter}
             onDragEnd={(event) => {
               const { active, over } = event;

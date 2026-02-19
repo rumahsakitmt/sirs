@@ -123,7 +123,7 @@ export function ReportHeatmap({
             const canClick = onDayClick && !future;
 
             return (
-              <Tooltip key={index}>
+              <Tooltip key={dateKey}>
                 <TooltipTrigger asChild>
                   <button
                     onClick={() => canClick && onDayClick?.(date)}

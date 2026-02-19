@@ -97,7 +97,7 @@ const MONTHS = [
 export function ReportViewer({
   templates,
   rooms,
-  initialReports = [],
+  initialReports,
   onFilterChange,
 }: ReportViewerProps) {
   const currentYear = new Date().getFullYear();
@@ -108,7 +108,7 @@ export function ReportViewer({
   const [selectedMonth, setSelectedMonth] = useState<number | undefined>(currentMonth);
   const [selectedRoomId, setSelectedRoomId] = useState<string | undefined>();
   const [selectedStatus, setSelectedStatus] = useState<"draft" | "submitted" | undefined>("submitted");
-  const [reports, setReports] = useState<ReportData[]>(initialReports);
+  const [reports, setReports] = useState<ReportData[]>(initialReports ?? []);
   const [isLoading, setIsLoading] = useState(false);
 
 
@@ -172,7 +172,7 @@ export function ReportViewer({
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             {/* Template Select */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">Template</label>
+              <label htmlFor="template-select" className="text-sm font-medium">Template</label>
               <Select
                 value={selectedTemplateId}
                 onValueChange={(v) => {
@@ -180,7 +180,7 @@ export function ReportViewer({
                   setSelectedRoomId(undefined);
                 }}
               >
-                <SelectTrigger className="w-full">
+                <SelectTrigger id="template-select" className="w-full">
                   <SelectValue placeholder="Pilih template" />
                 </SelectTrigger>
                 <SelectContent>
@@ -195,12 +195,12 @@ export function ReportViewer({
 
             {/* Year Select */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">Tahun</label>
+              <label htmlFor="year-select" className="text-sm font-medium">Tahun</label>
               <Select
                 value={selectedYear.toString()}
                 onValueChange={(v) => setSelectedYear(parseInt(v))}
               >
-                <SelectTrigger className="w-full">
+                <SelectTrigger id="year-select" className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -215,20 +215,20 @@ export function ReportViewer({
 
             {/* Month Select */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">Bulan</label>
+              <label htmlFor="month-select" className="text-sm font-medium">Bulan</label>
               <Select
                 value={selectedMonth?.toString() || "all"}
                 onValueChange={(v) =>
                   setSelectedMonth(v === "all" ? undefined : parseInt(v))
                 }
               >
-                <SelectTrigger className="w-full">
+                <SelectTrigger id="month-select" className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Semua Bulan</SelectItem>
                   {MONTHS.map((month, index) => (
-                    <SelectItem key={index} value={(index + 1).toString()}>
+                    <SelectItem key={month} value={(index + 1).toString()}>
                       {month}
                     </SelectItem>
                   ))}
@@ -238,14 +238,14 @@ export function ReportViewer({
 
             {/* Room Select */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">Ruangan</label>
+              <label htmlFor="room-select" className="text-sm font-medium">Ruangan</label>
               <Select
                 value={selectedRoomId || "all"}
                 onValueChange={(v) =>
                   setSelectedRoomId(v === "all" ? undefined : v)
                 }
               >
-                <SelectTrigger className="w-full">
+                <SelectTrigger id="room-select" className="w-full">
                   <SelectValue placeholder="Semua Ruangan" />
                 </SelectTrigger>
                 <SelectContent>
@@ -261,7 +261,7 @@ export function ReportViewer({
 
             {/* Search Button */}
             <div className="space-y-2">
-              <label className="text-sm font-medium invisible">Cari</label>
+              <span className="text-sm font-medium invisible" aria-hidden="true">Cari</span>
               <Button
                 onClick={handleSearch}
                 disabled={!selectedTemplateId || isLoading}
@@ -737,7 +737,7 @@ function MatrixCombinedView({
         <div className="text-sm space-y-1 mt-4 p-4 bg-muted/30 rounded-lg">
           <p className="font-semibold">Catatan:</p>
           {schema.notes.map((note, index) => (
-            <p key={index} className="text-muted-foreground">
+            <p key={`note-${index}`} className="text-muted-foreground">
               {note}
             </p>
           ))}

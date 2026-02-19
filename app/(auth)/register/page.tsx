@@ -3,6 +3,7 @@
 import { authClient } from "@/lib/auth-client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -123,9 +124,9 @@ export default function RegisterPage() {
         </form>
         <div className="mt-4 text-center text-sm">
           Sudah punya akun?{" "}
-          <a href="/login" className="text-primary hover:underline">
+          <Link href="/login" className="text-primary hover:underline">
             Masuk
-          </a>
+          </Link>
         </div>
       </CardContent>
     </Card>

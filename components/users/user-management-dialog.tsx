@@ -62,7 +62,7 @@ export function UserManagementDialog({
   const [open, setOpen] = useState(false);
   const [role, setRole] = useState(user.role);
   const [assignedRoomIds, setAssignedRoomIds] = useState<string[]>(
-    user.rooms.map((r) => r.roomId)
+    () => user.rooms.map((r) => r.roomId)
   );
   const [isPending, startTransition] = useTransition();
 

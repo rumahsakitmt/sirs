@@ -18,7 +18,7 @@ export default function ViewerLoading() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             {[...Array(5)].map((_, i) => (
-              <div key={i} className="space-y-2">
+              <div key={`skeleton-filter-${i}`} className="space-y-2">
                 <Skeleton className="h-4 w-20" />
                 <Skeleton className="h-10 w-full" />
               </div>
@@ -30,7 +30,7 @@ export default function ViewerLoading() {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         {[...Array(4)].map((_, i) => (
-          <Card key={i}>
+          <Card key={`skeleton-stat-${i}`}>
             <CardContent className="pt-6">
               <div className="flex items-center gap-4">
                 <Skeleton className="h-12 w-12 rounded-lg" />
