@@ -65,26 +65,33 @@ export const templateRouter = createTRPCRouter({
     .input(
       z.object({
         name: z.string().min(1, "Template name is required"),
-        roomId: z.string(),
+        roomIds: z.array(z.string()).min(1, "At least one room is required"),
         type: z.enum(["simple_list", "matrix"]),
-        periodType: z.enum(["daily", "monthly"]),
+        periodType: z.enum(["daily", "monthly", "yearly"]),
         schema: templateSchemaValidator,
         description: z.string().optional(),
       })
     )
     .mutation(async ({ input, ctx }) => {
-      const id = nanoid();
-      await db.insert(reportTemplate).values({
-        id,
-        roomId: input.roomId,
-        name: input.name,
-        description: input.description || null,
-        type: input.type,
-        periodType: input.periodType,
-        schema: input.schema,
-        createdBy: ctx.user.id,
-      });
-      return id;
+      const ids: string[] = [];
+      
+      // Create a template for each selected room
+      for (const roomId of input.roomIds) {
+        const id = nanoid();
+        await db.insert(reportTemplate).values({
+          id,
+          roomId,
+          name: input.name,
+          description: input.description || null,
+          type: input.type,
+          periodType: input.periodType,
+          schema: input.schema,
+          createdBy: ctx.user.id,
+        });
+        ids.push(id);
+      }
+      
+      return ids;
     }),
 
   update: adminProcedure

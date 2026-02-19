@@ -75,7 +75,7 @@ export default function NewTemplatePage() {
   const router = useRouter();
   const [step, setStep] = useState<"type" | "builder" | "preview">("type");
   const [templateName, setTemplateName] = useState("");
-  const [roomId, setRoomId] = useState("");
+  const [roomIds, setRoomIds] = useState<string[]>([]);
   const [periodType, setPeriodType] = useState<PeriodType>("monthly");
   const [templateType, setTemplateType] = useState<TemplateType | null>(null);
   const [schema, setSchema] = useState<TemplateSchema | null>(null);
@@ -83,7 +83,8 @@ export default function NewTemplatePage() {
 
   const { data: rooms, isLoading: isLoadingRooms } = trpc.room.list.useQuery();
   const createTemplateMutation = trpc.template.create.useMutation({
-    onSuccess: () => {
+    onSuccess: (data) => {
+      const count = data.length;
       router.push("/dashboard/templates");
       router.refresh();
     },
@@ -94,7 +95,7 @@ export default function NewTemplatePage() {
   });
 
   const handleNext = () => {
-    if (templateName && roomId && templateType) {
+    if (templateName && roomIds.length > 0 && templateType) {
       setStep("builder");
     }
   };
@@ -108,7 +109,7 @@ export default function NewTemplatePage() {
 
     createTemplateMutation.mutate({
       name: templateName,
-      roomId,
+      roomIds,
       type: templateType,
       periodType,
       schema: newSchema,
@@ -135,8 +136,8 @@ export default function NewTemplatePage() {
         <TemplateTypeSelector
           templateName={templateName}
           setTemplateName={setTemplateName}
-          roomId={roomId}
-          setRoomId={setRoomId}
+          roomIds={roomIds}
+          setRoomIds={setRoomIds}
           periodType={periodType}
           setPeriodType={setPeriodType}
           templateType={templateType}

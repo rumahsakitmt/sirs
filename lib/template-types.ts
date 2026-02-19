@@ -4,7 +4,7 @@
 
 export type TemplateType = "simple_list" | "matrix";
 export type FieldType = "number" | "text" | "select";
-export type PeriodType = "daily" | "monthly";
+export type PeriodType = "daily" | "monthly" | "yearly";
 
 // Simple List Template
 export interface SimpleListTemplateSchema {

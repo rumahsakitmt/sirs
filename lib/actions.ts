@@ -148,6 +148,8 @@ export async function updateTemplate(
   updates: {
     name?: string;
     description?: string;
+    roomId?: string;
+    periodType?: "daily" | "monthly" | "yearly";
     schema?: TemplateSchema;
     isActive?: boolean;
   }
@@ -166,6 +168,31 @@ export async function deleteTemplate(id: string) {
   await db.delete(reportTemplate).where(eq(reportTemplate.id, id));
   revalidatePath("/templates");
   revalidatePath("/reports/new");
+}
+
+export async function createTemplateForEdit(
+  name: string,
+  roomId: string,
+  type: "simple_list" | "matrix",
+  periodType: "daily" | "monthly" | "yearly",
+  schema: TemplateSchema,
+  createdBy: string,
+  description?: string
+) {
+  const id = nanoid();
+  await db.insert(reportTemplate).values({
+    id,
+    roomId,
+    name,
+    description: description || null,
+    type,
+    periodType,
+    schema,
+    createdBy,
+  });
+  revalidatePath("/templates");
+  revalidatePath("/reports/new");
+  return id;
 }
 
 // ============================================
