@@ -107,8 +107,8 @@ export function ReportHeatmap({
   return (
     <TooltipProvider>
       <div className="w-full">
-        <div className="flex gap-1 overflow-x-auto py-2 ">
-          {daysInMonth.map((date, index) => {
+        <div className="flex gap-1 overflow-x-auto p-2 ">
+          {daysInMonth.map((date) => {
             const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
             const count = reportCounts.get(dateKey) || 0;
             const today = isToday(date);

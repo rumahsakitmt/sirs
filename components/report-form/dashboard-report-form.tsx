@@ -124,11 +124,7 @@ export function DashboardReportForm() {
   if (isLoading) {
     return (
       <div className="container mx-auto py-6">
-        <div className="space-y-4">
-          <Skeleton className="h-40 w-full" />
-          <Skeleton className="h-16 w-full" />
-          <Skeleton className="h-96 w-full" />
-        </div>
+        <Skeleton className="h-96 w-full" />
       </div>
     );
   }
@@ -157,8 +153,8 @@ export function DashboardReportForm() {
 
   if (allReportsToShow.length === 0) {
     return (
-      <div className="container mx-auto py-6">
-        <p>
+      <div className="container mx-auto py-6 p-4 sm:p-0 bg-background rounded-2xl">
+        <p className="p-4">
           {isViewingToday
             ? `Tidak ada laporan untuk ${formatBulanTahun(currentYear, currentMonth)}`
             : `Tidak ada laporan untuk ${formatTanggal(selectedDate)}`}
@@ -168,7 +164,9 @@ export function DashboardReportForm() {
 
         <div className="py-8 text-center text-muted-foreground">
           <AlertCircle className="h-10 w-10 mx-auto mb-3 opacity-50" />
-          <p className="text-sm">Semua laporan untuk periode ini sudah dikirim!</p>
+          <p className="text-sm">
+            Semua laporan untuk periode ini sudah dikirim!
+          </p>
           <p className="text-xs mt-1 opacity-70">
             Seluruh laporan yang ditugaskan sudah lengkap.
           </p>
@@ -179,7 +177,7 @@ export function DashboardReportForm() {
 
   if (!currentItem) {
     return (
-      <div className="container mx-auto py-6">
+      <div className="container mx-auto py-6 p-4 sm:p-0 bg-background rounded-2xl">
         <p>Memuat laporan...</p>
       </div>
     );
@@ -207,7 +205,7 @@ export function DashboardReportForm() {
 
   if (!schema) {
     return (
-      <div className="container mx-auto py-6">
+      <div className="container mx-auto py-6 p-4 sm:p-0 bg-background rounded-2xl">
         <p className="text-red-500">Error: Skema template tidak ditemukan</p>
       </div>
     );
