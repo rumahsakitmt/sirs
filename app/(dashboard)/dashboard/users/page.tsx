@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/card";
 import { Users } from "lucide-react";
 import { UsersTable } from "@/components/users/users-table";
+import { AddUserDialog } from "@/components/users/add-user-dialog";
 
 export default async function UsersPage() {
   const session = await auth.api.getSession({
@@ -51,14 +52,17 @@ export default async function UsersPage() {
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5" />
-            Semua Pengguna
-          </CardTitle>
-          <CardDescription>
-            {users.length} pengguna terdaftar
-          </CardDescription>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div className="space-y-1">
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Semua Pengguna
+            </CardTitle>
+            <CardDescription>
+              {users.length} pengguna terdaftar
+            </CardDescription>
+          </div>
+          <AddUserDialog />
         </CardHeader>
         <CardContent>
           <UsersTable

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { DeleteConfirmationDialog } from "@/components/delete-confirmation-dialog";
-import { deleteTemplate } from "@/lib/actions";
+import { deleteTemplatesByName } from "@/lib/actions";
 import { Eye, Edit, Trash2 } from "lucide-react";
 
 interface TemplateActionsProps {
@@ -16,7 +16,7 @@ export function TemplateActions({
   templateName,
 }: TemplateActionsProps) {
   const handleDelete = async () => {
-    await deleteTemplate(templateId);
+    await deleteTemplatesByName(templateName);
   };
 
   return (

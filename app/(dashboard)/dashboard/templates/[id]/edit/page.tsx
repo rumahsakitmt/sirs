@@ -15,7 +15,7 @@ import { getTemplateById, updateTemplate, deleteTemplate, createTemplateForEdit 
 import { authClient } from "@/lib/auth-client";
 import { trpc } from "@/lib/trpc/client";
 import { TemplateSettingsForm } from "./components/template-settings-form";
-import type { 
+import type {
   TemplateSchema,
   SimpleListTemplateSchema,
   MatrixTemplateSchema,
@@ -106,7 +106,7 @@ export default function EditTemplatePage({ params }: EditTemplatePageProps) {
         setPeriodType((report_template.periodType as PeriodType) || "monthly");
         setIsActive(report_template.isActive ?? true);
         setSchema(report_template.schema as TemplateSchema);
-        
+
         if (allTemplates) {
           const siblings = allTemplates.filter(
             (t) =>
@@ -116,7 +116,7 @@ export default function EditTemplatePage({ params }: EditTemplatePageProps) {
               t.room?.id
           );
           const siblingRoomIds = siblings.map((t) => t.room!.id);
-          const allRoomIds = report_template.roomId 
+          const allRoomIds = report_template.roomId
             ? [report_template.roomId, ...siblingRoomIds]
             : siblingRoomIds;
           setRoomIds(allRoomIds);
@@ -146,13 +146,29 @@ export default function EditTemplatePage({ params }: EditTemplatePageProps) {
       const roomsToAdd = roomIds.filter((rid) => !originalRoomIds.includes(rid));
       const roomsToRemove = originalRoomIds.filter((rid) => !roomIds.includes(rid));
 
-      await updateTemplate(id, {
-        name: templateName,
-        description: description || undefined,
-        periodType,
-        schema: newSchema,
-        isActive,
-      });
+      let templatesToUpdate = [id];
+      if (allTemplates) {
+        const siblingsToUpdate = allTemplates.filter(
+          (t) =>
+            t.name === template.name &&
+            t.type === template.type &&
+            t.id !== id &&
+            !roomsToRemove.includes(t.room?.id || "")
+        );
+        templatesToUpdate = [...templatesToUpdate, ...siblingsToUpdate.map(t => t.id)];
+      }
+
+      await Promise.all(
+        templatesToUpdate.map((targetId) =>
+          updateTemplate(targetId, {
+            name: templateName,
+            description: description || undefined,
+            periodType,
+            schema: newSchema,
+            isActive,
+          })
+        )
+      );
 
       for (const roomId of roomsToAdd) {
         await createTemplateForEdit(

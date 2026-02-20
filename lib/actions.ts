@@ -170,6 +170,12 @@ export async function deleteTemplate(id: string) {
   revalidatePath("/reports/new");
 }
 
+export async function deleteTemplatesByName(name: string) {
+  await db.delete(reportTemplate).where(eq(reportTemplate.name, name));
+  revalidatePath("/templates");
+  revalidatePath("/reports/new");
+}
+
 export async function createTemplateForEdit(
   name: string,
   roomId: string,

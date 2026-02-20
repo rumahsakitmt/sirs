@@ -38,6 +38,25 @@ export default async function TemplatesPage() {
 
   const templates = await getTemplates();
 
+  // Aggregate templates by name
+  const groupedTemplates = templates.reduce((acc, template) => {
+    if (!acc[template.name]) {
+      acc[template.name] = {
+        ...template,
+        rooms: [],
+        isGlobal: false,
+      };
+    }
+    if (template.room) {
+      acc[template.name].rooms.push(template.room.name);
+    } else {
+      acc[template.name].isGlobal = true;
+    }
+    return acc;
+  }, {} as Record<string, any>);
+
+  const uniqueTemplates = Object.values(groupedTemplates) as any[];
+
   return (
     <div className="container mx-auto py-6">
       <div className="flex justify-between items-center mb-6">
@@ -59,7 +78,7 @@ export default async function TemplatesPage() {
         <CardHeader>
           <CardTitle>Semua Template</CardTitle>
           <CardDescription>
-            {templates.length} template ditemukan
+            {uniqueTemplates.length} template ditemukan
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -76,10 +95,19 @@ export default async function TemplatesPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {templates.map((template) => (
+              {uniqueTemplates.map((template) => (
                 <TableRow key={template.id}>
                   <TableCell className="font-medium">{template.name}</TableCell>
-                  <TableCell>{template.room?.name || "-"}</TableCell>
+                  <TableCell
+                    className="max-w-[250px] truncate"
+                    title={template.isGlobal ? "Semua Ruangan" : template.rooms.join(", ")}
+                  >
+                    {template.isGlobal
+                      ? "Semua Ruangan"
+                      : template.rooms.length > 0
+                        ? template.rooms.join(", ")
+                        : "-"}
+                  </TableCell>
                   <TableCell>
                     <Badge variant="outline">
                       {template.type === "simple_list"
@@ -115,7 +143,7 @@ export default async function TemplatesPage() {
             </TableBody>
           </Table>
 
-          {templates.length === 0 && (
+          {uniqueTemplates.length === 0 && (
             <div className="text-center py-12 text-muted-foreground">
               <p>Belum ada template yang dibuat.</p>
               <Link href="/dashboard/templates/new">

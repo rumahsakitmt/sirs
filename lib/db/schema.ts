@@ -15,18 +15,22 @@ import type { TemplateSchema } from "@/lib/template-types";
 // Better Auth Tables
 // ============================================
 
+
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
   emailVerified: boolean("email_verified").default(false).notNull(),
   image: text("image"),
-  role: text("role").default("user").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
+  role: text("role").default("staff").notNull(),
+  banned: boolean("banned").default(false),
+  banReason: text("ban_reason"),
+  banExpires: timestamp("ban_expires"),
 });
 
 export const session = pgTable(
@@ -44,6 +48,7 @@ export const session = pgTable(
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
+    impersonatedBy: text("impersonated_by"),
   },
   (table) => [index("session_userId_idx").on(table.userId)],
 );
@@ -87,6 +92,8 @@ export const verification = pgTable(
   },
   (table) => [index("verification_identifier_idx").on(table.identifier)],
 );
+
+
 
 // ============================================
 // Application Tables
@@ -146,9 +153,9 @@ export const userRoom = pgTable(
       .references(() => room.id, { onDelete: "cascade" }),
     assignedAt: timestamp("assigned_at").notNull().defaultNow(),
   },
-  (table) => ({
-    pk: primaryKey({ columns: [table.userId, table.roomId] }),
-  }),
+  (table) => [
+    primaryKey({ columns: [table.userId, table.roomId] }),
+  ],
 );
 
 // ============================================
