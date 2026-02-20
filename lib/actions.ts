@@ -354,7 +354,7 @@ export async function deleteUser(userId: string) {
 // ============================================
 
 export async function getReportsForViewer(
-  templateId: string,
+  templateId: string | string[],
   filters?: {
     year?: number;
     month?: number;
@@ -364,7 +364,17 @@ export async function getReportsForViewer(
     status?: "draft" | "submitted";
   }
 ) {
-  const conditions = [eq(report.templateId, templateId)];
+  const conditions = [];
+
+  if (Array.isArray(templateId)) {
+    if (templateId.length > 0) {
+      conditions.push(inArray(report.templateId, templateId));
+    } else {
+      conditions.push(eq(report.templateId, "")); // Fallback if empty array
+    }
+  } else {
+    conditions.push(eq(report.templateId, templateId));
+  }
 
   if (filters?.year) {
     conditions.push(eq(report.periodYear, filters.year));

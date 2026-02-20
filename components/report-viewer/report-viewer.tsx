@@ -79,7 +79,8 @@ interface ReportViewerProps {
   rooms: Room[];
   initialReports?: ReportData[];
   onFilterChange: (filters: {
-    templateId: string;
+    templateId?: string;
+    templateIds?: string[];
     year: number;
     month?: number;
     startDay?: number;
@@ -103,7 +104,7 @@ export function ReportViewer({
   const currentYear = new Date().getFullYear();
   const currentMonth = new Date().getMonth() + 1;
 
-  const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
+  const [selectedTemplateName, setSelectedTemplateName] = useState<string>("");
   const [selectedYear, setSelectedYear] = useState<number>(currentYear);
   const [selectedMonth, setSelectedMonth] = useState<number | undefined>(currentMonth);
   const [selectedRoomId, setSelectedRoomId] = useState<string | undefined>();
@@ -111,16 +112,37 @@ export function ReportViewer({
   const [reports, setReports] = useState<ReportData[]>(initialReports ?? []);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Group templates by name
+  const uniqueTemplates = useMemo(() => {
+    const map = new Map<string, Template>();
+    templates.forEach(t => {
+      if (!map.has(t.name)) {
+        map.set(t.name, t);
+      }
+    });
+    return Array.from(map.values());
+  }, [templates]);
 
-  const selectedTemplate = useMemo(
-    () => templates.find((t) => t.id === selectedTemplateId),
-    [templates, selectedTemplateId]
+  // All templates matching the selected name
+  const selectedTemplates = useMemo(
+    () => templates.filter((t) => t.name === selectedTemplateName),
+    [templates, selectedTemplateName]
   );
 
+  // Use the first template for schema rendering
+  const selectedTemplate = selectedTemplates.length > 0 ? selectedTemplates[0] : undefined;
+
   const filteredRooms = useMemo(() => {
-    if (!selectedTemplate?.room) return rooms;
-    return rooms.filter((r) => r.id === selectedTemplate.room?.id);
-  }, [rooms, selectedTemplate]);
+    if (selectedTemplates.length === 0) return rooms;
+
+    // If any selected template is global (no room), show all rooms
+    const hasGlobal = selectedTemplates.some(t => !t.room);
+    if (hasGlobal) return rooms;
+
+    // Otherwise, only show rooms that are assigned to these templates
+    const roomIds = new Set(selectedTemplates.map(t => t.room?.id).filter(Boolean));
+    return rooms.filter((r) => roomIds.has(r.id));
+  }, [rooms, selectedTemplates]);
 
   const years = useMemo(() => {
     const years: number[] = [];
@@ -136,12 +158,12 @@ export function ReportViewer({
   }, [selectedYear, selectedMonth]);
 
   const handleSearch = async () => {
-    if (!selectedTemplateId) return;
+    if (selectedTemplates.length === 0) return;
 
     setIsLoading(true);
     try {
       const results = await onFilterChange({
-        templateId: selectedTemplateId,
+        templateIds: selectedTemplates.map(t => t.id),
         year: selectedYear,
         month: selectedMonth,
         roomId: selectedRoomId,
@@ -174,9 +196,9 @@ export function ReportViewer({
             <div className="space-y-2">
               <label htmlFor="template-select" className="text-sm font-medium">Template</label>
               <Select
-                value={selectedTemplateId}
+                value={selectedTemplateName}
                 onValueChange={(v) => {
-                  setSelectedTemplateId(v);
+                  setSelectedTemplateName(v);
                   setSelectedRoomId(undefined);
                 }}
               >
@@ -184,8 +206,8 @@ export function ReportViewer({
                   <SelectValue placeholder="Pilih template" />
                 </SelectTrigger>
                 <SelectContent>
-                  {templates.map((template) => (
-                    <SelectItem key={template.id} value={template.id}>
+                  {uniqueTemplates.map((template) => (
+                    <SelectItem key={template.name} value={template.name}>
                       {template.name}
                     </SelectItem>
                   ))}
@@ -264,7 +286,7 @@ export function ReportViewer({
               <span className="text-sm font-medium invisible" aria-hidden="true">Cari</span>
               <Button
                 onClick={handleSearch}
-                disabled={!selectedTemplateId || isLoading}
+                disabled={selectedTemplates.length === 0 || isLoading}
                 className="w-full"
               >
                 {isLoading ? "Memuat..." : "Cari Laporan"}
@@ -366,7 +388,7 @@ export function ReportViewer({
       )}
 
       {/* No results */}
-      {selectedTemplateId && reports.length === 0 && !isLoading && (
+      {selectedTemplates.length > 0 && reports.length === 0 && !isLoading && (
         <Card>
           <CardContent className="py-12 text-center">
             <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
@@ -547,7 +569,7 @@ function SimpleListCombinedView({
   // Calculate combined totals for each row and column
   const combinedData = useMemo(() => {
     const totals: Record<string, Record<string, number>> = {};
-    
+
     // Initialize totals
     schema.rows.forEach((row) => {
       totals[row.id] = {};
@@ -625,7 +647,7 @@ function MatrixCombinedView({
   // Calculate combined totals for each row and column
   const combinedData = useMemo(() => {
     const totals: Record<string, Record<string, number>> = {};
-    
+
     // Initialize totals
     schema.rows.forEach((row) => {
       totals[row.id] = {};
@@ -695,15 +717,15 @@ function MatrixCombinedView({
                 ))}
               </>
             ) : (
-            <TableRow>
-              <TableHead className="w-12 text-center">No</TableHead>
-              <TableHead className="min-w-[180px]">Jenis Layanan</TableHead>
-              {leafColumns.map((col) => (
-                <TableHead key={col.id} className="text-center min-w-[80px]">
-                  {col.label}
-                </TableHead>
-              ))}
-            </TableRow>
+              <TableRow>
+                <TableHead className="w-12 text-center">No</TableHead>
+                <TableHead className="min-w-[180px]">Jenis Layanan</TableHead>
+                {leafColumns.map((col) => (
+                  <TableHead key={col.id} className="text-center min-w-[80px]">
+                    {col.label}
+                  </TableHead>
+                ))}
+              </TableRow>
             )}
           </TableHeader>
           <TableBody>

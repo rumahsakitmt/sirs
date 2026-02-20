@@ -28,7 +28,8 @@ interface ReportViewerWrapperProps {
 
 export function ReportViewerWrapper({ templates, rooms }: ReportViewerWrapperProps) {
   const handleFilterChange = async (filters: {
-    templateId: string;
+    templateId?: string;
+    templateIds?: string[];
     year: number;
     month?: number;
     startDay?: number;
@@ -36,7 +37,7 @@ export function ReportViewerWrapper({ templates, rooms }: ReportViewerWrapperPro
     roomId?: string;
     status?: "draft" | "submitted";
   }) => {
-    const results = await getReportsForViewer(filters.templateId, {
+    const results = await getReportsForViewer(filters.templateIds || filters.templateId || "", {
       year: filters.year,
       month: filters.month,
       startDay: filters.startDay,
