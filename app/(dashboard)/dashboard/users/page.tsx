@@ -12,6 +12,7 @@ import {
 import { Users } from "lucide-react";
 import { UsersTable } from "@/components/users/users-table";
 import { AddUserDialog } from "@/components/users/add-user-dialog";
+import { BulkAddUserDialog } from "@/components/users/bulk-add-user-dialog";
 
 export default async function UsersPage() {
   const session = await auth.api.getSession({
@@ -62,7 +63,10 @@ export default async function UsersPage() {
               {users.length} pengguna terdaftar
             </CardDescription>
           </div>
-          <AddUserDialog />
+          <div className="flex items-center gap-2">
+            <BulkAddUserDialog />
+            <AddUserDialog />
+          </div>
         </CardHeader>
         <CardContent>
           <UsersTable
