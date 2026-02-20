@@ -31,9 +31,9 @@ export const getTemplates = cache(async () => {
       name: room.name,
     },
   })
-  .from(reportTemplate)
-  .leftJoin(room, eq(reportTemplate.roomId, room.id))
-  .orderBy(desc(reportTemplate.createdAt));
+    .from(reportTemplate)
+    .leftJoin(room, eq(reportTemplate.roomId, room.id))
+    .orderBy(desc(reportTemplate.createdAt));
 });
 
 export const getTemplateById = cache(async (id: string) => {
@@ -42,7 +42,7 @@ export const getTemplateById = cache(async (id: string) => {
     .where(eq(reportTemplate.id, id))
     .leftJoin(room, eq(reportTemplate.roomId, room.id))
     .limit(1);
-  
+
   return templates[0] || null;
 });
 
@@ -55,9 +55,9 @@ export const getUserRooms = cache(async (userId: string) => {
       name: room.name,
     },
   })
-  .from(userRoom)
-  .leftJoin(room, eq(userRoom.roomId, room.id))
-  .where(eq(userRoom.userId, userId));
+    .from(userRoom)
+    .leftJoin(room, eq(userRoom.roomId, room.id))
+    .where(eq(userRoom.userId, userId));
 });
 
 export const getUsers = cache(async () => {
@@ -68,8 +68,8 @@ export const getUsers = cache(async () => {
     role: user.role,
     createdAt: user.createdAt,
   })
-  .from(user)
-  .orderBy(user.name);
+    .from(user)
+    .orderBy(user.name);
 });
 
 export const getReportById = cache(async (id: string) => {
@@ -80,7 +80,7 @@ export const getReportById = cache(async (id: string) => {
     .leftJoin(reportTemplate, eq(report.templateId, reportTemplate.id))
     .leftJoin(user, eq(report.userId, user.id))
     .limit(1);
-  
+
   return reports[0] || null;
 });
 
@@ -199,63 +199,62 @@ export async function createTemplateForEdit(
 // Report Actions
 // ============================================
 
-export async function getReports(userId: string, isAdmin: boolean) {
-  if (isAdmin) {
-    return await db.select({
-      id: report.id,
-      periodYear: report.periodYear,
-      periodMonth: report.periodMonth,
-      periodDay: report.periodDay,
-      status: report.status,
-      createdAt: report.createdAt,
-      submittedAt: report.submittedAt,
-      room: {
-        id: room.id,
-        name: room.name,
-      },
-      template: {
-        id: reportTemplate.id,
-        name: reportTemplate.name,
-      },
-      user: {
-        id: user.id,
-        name: user.name,
-      },
-    })
-    .from(report)
-    .leftJoin(room, eq(report.roomId, room.id))
-    .leftJoin(reportTemplate, eq(report.templateId, reportTemplate.id))
-    .leftJoin(user, eq(report.userId, user.id))
-    .orderBy(desc(report.createdAt));
-  } else {
-    return await db.select({
-      id: report.id,
-      periodYear: report.periodYear,
-      periodMonth: report.periodMonth,
-      periodDay: report.periodDay,
-      status: report.status,
-      createdAt: report.createdAt,
-      submittedAt: report.submittedAt,
-      room: {
-        id: room.id,
-        name: room.name,
-      },
-      template: {
-        id: reportTemplate.id,
-        name: reportTemplate.name,
-      },
-      user: {
-        id: user.id,
-        name: user.name,
-      },
-    })
-    .from(report)
-    .leftJoin(room, eq(report.roomId, room.id))
-    .leftJoin(reportTemplate, eq(report.templateId, reportTemplate.id))
-    .leftJoin(user, eq(report.userId, user.id))
-    .where(eq(report.userId, userId))
-    .orderBy(desc(report.createdAt));
+export async function getReports(
+  userId: string,
+  isAdmin: boolean,
+  filters?: { roomId?: string; templateId?: string | string[] }
+) {
+  const conditions = [];
+
+  if (!isAdmin) {
+    conditions.push(eq(report.userId, userId));
   }
+
+  if (filters?.roomId) {
+    conditions.push(eq(report.roomId, filters.roomId));
+  }
+
+  if (filters?.templateId) {
+    if (Array.isArray(filters.templateId)) {
+      if (filters.templateId.length > 0) {
+        conditions.push(inArray(report.templateId, filters.templateId));
+      } else {
+        conditions.push(eq(report.templateId, "")); // Fallback if empty
+      }
+    } else {
+      conditions.push(eq(report.templateId, filters.templateId));
+    }
+  }
+
+  const queryConditions = conditions.length > 0 ? and(...conditions) : undefined;
+
+  return await db.select({
+    id: report.id,
+    periodYear: report.periodYear,
+    periodMonth: report.periodMonth,
+    periodDay: report.periodDay,
+    status: report.status,
+    createdAt: report.createdAt,
+    submittedAt: report.submittedAt,
+    room: {
+      id: room.id,
+      name: room.name,
+    },
+    template: {
+      id: reportTemplate.id,
+      name: reportTemplate.name,
+    },
+    user: {
+      id: user.id,
+      name: user.name,
+    },
+  })
+    .from(report)
+    .leftJoin(room, eq(report.roomId, room.id))
+    .leftJoin(reportTemplate, eq(report.templateId, reportTemplate.id))
+    .leftJoin(user, eq(report.userId, user.id))
+    .where(queryConditions)
+    .orderBy(desc(report.createdAt));
 }
 
 export async function createReport(
@@ -516,7 +515,7 @@ export async function getRoomSubmissionStatus(
       const matchingReport = submittedReports.find((rep) => {
         const matchesTemplate = rep.templateId === t.id;
         const matchesRoom = rep.roomId === r.id;
-        
+
         // For daily templates, check the day matches
         if (t.periodType === "daily") {
           return matchesTemplate && matchesRoom && rep.periodDay === day;
@@ -555,7 +554,7 @@ export async function getRoomSubmissionStatus(
 
 export async function getTodaySubmissionSummary(date: Date = new Date()) {
   const statuses = await getRoomSubmissionStatus(date);
-  
+
   const totalRooms = statuses.length;
   const roomsWithTemplates = statuses.filter((s) => s.totalTemplates > 0).length;
   const roomsFullySubmitted = statuses.filter((s) => s.hasAllSubmitted).length;
@@ -571,7 +570,7 @@ export async function getTodaySubmissionSummary(date: Date = new Date()) {
     ...s,
     templates: s.templates.filter((t) => t.periodType === "daily"),
   }));
-  
+
   const dailySubmittedCount = dailyStatuses.reduce(
     (sum, s) => sum + s.templates.filter((t) => t.submitted).length,
     0

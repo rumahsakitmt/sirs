@@ -1,9 +1,10 @@
-import { getReports, getUserRooms } from "@/lib/actions";
+import { getReports, getUserRooms, getRooms, getTemplates } from "@/lib/actions";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { ReportListFilters } from "@/components/report-list-filters";
 import {
   Card,
   CardContent,
@@ -22,7 +23,15 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Plus, FileText, Edit, Eye, Printer, BarChart3 } from "lucide-react";
 
-export default async function ReportsPage() {
+export default async function ReportsPage(
+  props: {
+    searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
+  }
+) {
+  const searchParams = await props.searchParams;
+  const roomIdFilter = searchParams?.room as string | undefined;
+  const templateFilter = searchParams?.template as string | undefined;
+
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -32,10 +41,36 @@ export default async function ReportsPage() {
   }
 
   const isAdmin = session.user.role === "admin";
-  const [reports, userRooms] = await Promise.all([
-    getReports(session.user.id, isAdmin),
-    isAdmin ? [] : getUserRooms(session.user.id),
+
+  const [allRooms, allTemplates, userRoomsData] = await Promise.all([
+    isAdmin ? getRooms() : Promise.resolve([]),
+    getTemplates(),
+    isAdmin ? Promise.resolve([]) : getUserRooms(session.user.id),
   ]);
+
+  const rooms = isAdmin
+    ? allRooms.map((r) => ({ id: r.id, name: r.name }))
+    : userRoomsData
+      .map((ur) => ur.room)
+      .filter((r): r is { id: string; name: string } => r !== null);
+
+  const filterTemplates = allTemplates.map((t) => ({
+    id: t.id,
+    name: t.name,
+  }));
+
+  // Find all template IDs that match the templateName filter
+  let templateIdsFilter: string[] | undefined = undefined;
+  if (templateFilter) {
+    templateIdsFilter = allTemplates
+      .filter((t) => t.name === templateFilter)
+      .map((t) => t.id);
+  }
+
+  const reports = await getReports(session.user.id, isAdmin, {
+    roomId: roomIdFilter,
+    templateId: templateIdsFilter,
+  });
 
   return (
     <div className="container mx-auto py-6">
@@ -53,7 +88,7 @@ export default async function ReportsPage() {
               Lihat Laporan
             </Button>
           </Link>
-          {(isAdmin || userRooms.length > 0) && (
+          {(isAdmin || userRoomsData.length > 0) && (
             <Link href="/dashboard/reports/new">
               <Button>
                 <Plus className="mr-2 h-4 w-4" />
@@ -63,6 +98,8 @@ export default async function ReportsPage() {
           )}
         </div>
       </div>
+
+      <ReportListFilters rooms={rooms} templates={filterTemplates} />
 
       <Card>
         <CardHeader>
@@ -139,7 +176,7 @@ export default async function ReportsPage() {
             <div className="text-center py-12 text-muted-foreground">
               <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p>Tidak ada laporan ditemukan.</p>
-              {isAdmin || userRooms.length > 0 ? (
+              {isAdmin || userRoomsData.length > 0 ? (
                 <Link href="/dashboard/reports/new">
                   <Button variant="outline" className="mt-4">
                     Buat laporan pertama
