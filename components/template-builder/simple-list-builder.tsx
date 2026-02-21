@@ -104,7 +104,7 @@ export function SimpleListBuilder({
   const [title, setTitle] = useState(initialSchema?.title || "");
   const [description, setDescription] = useState(initialSchema?.description || "");
   const [valueColumns, setValueColumns] = useState(
-    initialSchema?.valueColumns || [{ id: nanoid(), label: "JUMLAH", fieldType: "number" as FieldType }]
+    initialSchema?.valueColumns || [{ id: nanoid(), label: "", fieldType: "number" as FieldType }]
   );
   const [rows, setRows] = useState(
     initialSchema?.rows || []
@@ -162,7 +162,7 @@ export function SimpleListBuilder({
   const addValueColumn = () => {
     setValueColumns([
       ...valueColumns,
-      { id: nanoid(), label: "New Column", fieldType: "number" },
+      { id: nanoid(), label: "", fieldType: "number" },
     ]);
   };
 

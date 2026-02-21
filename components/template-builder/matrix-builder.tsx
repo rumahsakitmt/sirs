@@ -223,7 +223,7 @@ function SortableColumn({ column, onRemove, onUpdate, depth = 0 }: SortableColum
                   ...column,
                   children: [
                     ...column.children,
-                    { type: "field", id: nanoid(), label: "New Field", fieldType: "number" },
+                    { type: "field", id: nanoid(), label: "", fieldType: "number" },
                   ],
                 });
               }}
@@ -239,7 +239,7 @@ function SortableColumn({ column, onRemove, onUpdate, depth = 0 }: SortableColum
                   ...column,
                   children: [
                     ...column.children,
-                    { type: "group", id: nanoid(), label: "New Group", children: [] },
+                    { type: "group", id: nanoid(), label: "", children: [] },
                   ],
                 });
               }}
@@ -411,14 +411,14 @@ export function MatrixBuilder({
   const addColumn = () => {
     setColumns([
       ...columns,
-      { type: "field", id: nanoid(), label: "New Column", fieldType: "number" },
+      { type: "field", id: nanoid(), label: "", fieldType: "number" },
     ]);
   };
 
   const addColumnGroup = () => {
     setColumns([
       ...columns,
-      { type: "group", id: nanoid(), label: "New Group", children: [] },
+      { type: "group", id: nanoid(), label: "", children: [] },
     ]);
   };
 
