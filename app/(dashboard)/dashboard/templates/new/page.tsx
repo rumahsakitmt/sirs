@@ -165,12 +165,14 @@ export default function NewTemplatePage() {
       )}
 
       <Dialog open={showPreview} onOpenChange={setShowPreview}>
-        <DialogContent className="max-w-5xl max-h-[90vh] overflow-auto">
-          <DialogHeader>
+        <DialogContent className="max-w-[98vw] sm:max-w-[95vw] md:max-w-[90vw] w-full max-h-[95vh] overflow-auto p-0">
+          <DialogHeader className="p-6 pb-0">
             <DialogTitle>Template Preview</DialogTitle>
           </DialogHeader>
           {schema ? (
-            <TemplatePreview schema={schema} />
+            <div className="p-6">
+              <TemplatePreview schema={schema} />
+            </div>
           ) : (
             <p className="text-center text-muted-foreground py-8">
               No schema available for preview

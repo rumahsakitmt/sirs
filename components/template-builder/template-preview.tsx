@@ -1,4 +1,3 @@
-import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { 
   getColumnDepth, 
@@ -253,24 +252,22 @@ export function TemplatePreview({
   showInputs = false,
 }: TemplatePreviewProps) {
   return (
-    <Card>
-      <CardContent className="p-6">
-        {schema.type === "simple_list" ? (
-          <SimpleListPreview
-            schema={schema}
-            periodMonth={periodMonth}
-            periodYear={periodYear}
-            showInputs={showInputs}
-          />
-        ) : (
-          <MatrixPreview
-            schema={schema}
-            periodMonth={periodMonth}
-            periodYear={periodYear}
-            showInputs={showInputs}
-          />
-        )}
-      </CardContent>
-    </Card>
+    <div className="w-full">
+      {schema.type === "simple_list" ? (
+        <SimpleListPreview
+          schema={schema}
+          periodMonth={periodMonth}
+          periodYear={periodYear}
+          showInputs={showInputs}
+        />
+      ) : (
+        <MatrixPreview
+          schema={schema}
+          periodMonth={periodMonth}
+          periodYear={periodYear}
+          showInputs={showInputs}
+        />
+      )}
+    </div>
   );
 }
