@@ -13,7 +13,16 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Upload, Loader2, Download } from "lucide-react";
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Upload, Loader2, Download, AlertCircle } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -22,6 +31,7 @@ export function BulkAddUserDialog() {
     const [open, setOpen] = useState(false);
     const [loading, setLoading] = useState(false);
     const [file, setFile] = useState<File | null>(null);
+    const [parsedUsers, setParsedUsers] = useState<any[] | null>(null);
     const [progress, setProgress] = useState({ current: 0, total: 0, failed: 0 });
     const router = useRouter();
 
@@ -64,8 +74,24 @@ export function BulkAddUserDialog() {
 
         const data = [];
         for (let i = 1; i < lines.length; i++) {
-            const row = lines[i].match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || lines[i].split(",");
-            const cleanRow = row.map(val => val.replace(/^"|"$/g, '').trim());
+            const row: string[] = [];
+            let current = "";
+            let inQuotes = false;
+
+            for (let j = 0; j < lines[i].length; j++) {
+                const char = lines[i][j];
+                if (char === '"') {
+                    inQuotes = !inQuotes;
+                } else if (char === ',' && !inQuotes) {
+                    row.push(current);
+                    current = "";
+                } else {
+                    current += char;
+                }
+            }
+            row.push(current);
+
+            const cleanRow = row.map(val => val.trim());
 
             if (cleanRow.length >= 4) {
                 data.push({
@@ -79,7 +105,7 @@ export function BulkAddUserDialog() {
         return data;
     };
 
-    async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+    async function handlePreview(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
 
         if (!file) {
@@ -87,7 +113,6 @@ export function BulkAddUserDialog() {
             return;
         }
 
-        setLoading(true);
         try {
             const text = await file.text();
             let usersToCreate;
@@ -95,23 +120,32 @@ export function BulkAddUserDialog() {
                 usersToCreate = parseCSV(text);
             } catch (err: any) {
                 toast.error(err.message || "Gagal membaca format CSV");
-                setLoading(false);
                 return;
             }
 
             if (usersToCreate.length === 0) {
                 toast.error("Tidak ada data pengguna dalam file");
-                setLoading(false);
                 return;
             }
 
-            setProgress({ current: 0, total: usersToCreate.length, failed: 0 });
+            setParsedUsers(usersToCreate);
+        } catch (error) {
+            toast.error("Terjadi kesalahan saat membaca file");
+        }
+    }
+
+    async function handleUpload() {
+        if (!parsedUsers || parsedUsers.length === 0) return;
+
+        setLoading(true);
+        try {
+            setProgress({ current: 0, total: parsedUsers.length, failed: 0 });
 
             let failedCount = 0;
             let successCount = 0;
 
-            for (let i = 0; i < usersToCreate.length; i++) {
-                const user = usersToCreate[i];
+            for (let i = 0; i < parsedUsers.length; i++) {
+                const user = parsedUsers[i];
                 const { error } = await authClient.admin.createUser({
                     email: user.email,
                     password: user.password,
@@ -126,7 +160,7 @@ export function BulkAddUserDialog() {
                     successCount++;
                 }
 
-                setProgress({ current: i + 1, total: usersToCreate.length, failed: failedCount });
+                setProgress({ current: i + 1, total: parsedUsers.length, failed: failedCount });
             }
 
             if (failedCount > 0) {
@@ -142,7 +176,9 @@ export function BulkAddUserDialog() {
             setTimeout(() => {
                 setOpen(false);
                 setFile(null);
+                setParsedUsers(null);
                 setProgress({ current: 0, total: 0, failed: 0 });
+                setLoading(false);
             }, 2000);
 
         } catch (error) {
@@ -157,6 +193,7 @@ export function BulkAddUserDialog() {
                 setOpen(val);
                 if (!val) {
                     setFile(null);
+                    setParsedUsers(null);
                     setProgress({ current: 0, total: 0, failed: 0 });
                 }
             }
@@ -176,45 +213,91 @@ export function BulkAddUserDialog() {
                 </DialogHeader>
 
                 {!loading && progress.total === 0 ? (
-                    <form onSubmit={onSubmit} className="space-y-4">
-                        <div className="space-y-2">
-                            <Label>Template CSV</Label>
-                            <div>
+                    !parsedUsers ? (
+                        <form onSubmit={handlePreview} className="space-y-4">
+                            <div className="space-y-2">
+                                <Label>Template CSV</Label>
+                                <div>
+                                    <Button
+                                        type="button"
+                                        variant="secondary"
+                                        size="sm"
+                                        className="gap-2"
+                                        onClick={handleDownloadTemplate}
+                                    >
+                                        <Download className="h-4 w-4" />
+                                        Download Template
+                                    </Button>
+                                </div>
+                            </div>
+                            <div className="space-y-2 pt-2">
+                                <Label htmlFor="file">File CSV</Label>
+                                <Input
+                                    id="file"
+                                    type="file"
+                                    accept=".csv"
+                                    onChange={(e) => setFile(e.target.files?.[0] || null)}
+                                    required
+                                />
+                            </div>
+                            <DialogFooter className="pt-4">
                                 <Button
                                     type="button"
-                                    variant="secondary"
-                                    size="sm"
-                                    className="gap-2"
-                                    onClick={handleDownloadTemplate}
+                                    variant="outline"
+                                    onClick={() => setOpen(false)}
                                 >
-                                    <Download className="h-4 w-4" />
-                                    Download Template
+                                    Batal
                                 </Button>
+                                <Button type="submit" disabled={!file}>
+                                    Pratinjau Data
+                                </Button>
+                            </DialogFooter>
+                        </form>
+                    ) : (
+                        <div className="space-y-4">
+                            <div className="rounded-md border">
+                                <ScrollArea className="h-[300px]">
+                                    <Table>
+                                        <TableHeader className="sticky top-0 bg-background z-10 shadow-sm">
+                                            <TableRow>
+                                                <TableHead>Nama</TableHead>
+                                                <TableHead>Email</TableHead>
+                                                <TableHead>Peran</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {parsedUsers.map((user, idx) => (
+                                                <TableRow key={`preview-${idx}`}>
+                                                    <TableCell className="font-medium">{user.name}</TableCell>
+                                                    <TableCell>{user.email}</TableCell>
+                                                    <TableCell className="capitalize">{user.role}</TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                </ScrollArea>
                             </div>
+                            <div className="flex items-center gap-2 p-3 text-sm bg-orange-50 text-orange-900 border border-orange-200 rounded-md">
+                                <AlertCircle className="h-4 w-4 shrink-0" />
+                                <p>Pastikan data sudah benar sebelum mengunggah. Password tidak ditampilkan untuk alasan keamanan.</p>
+                            </div>
+                            <DialogFooter className="pt-4">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => {
+                                        setParsedUsers(null);
+                                        setFile(null);
+                                    }}
+                                >
+                                    Batal
+                                </Button>
+                                <Button onClick={handleUpload}>
+                                    Upload {parsedUsers.length} Data
+                                </Button>
+                            </DialogFooter>
                         </div>
-                        <div className="space-y-2 pt-2">
-                            <Label htmlFor="file">File CSV</Label>
-                            <Input
-                                id="file"
-                                type="file"
-                                accept=".csv"
-                                onChange={(e) => setFile(e.target.files?.[0] || null)}
-                                required
-                            />
-                        </div>
-                        <DialogFooter className="pt-4">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => setOpen(false)}
-                            >
-                                Batal
-                            </Button>
-                            <Button type="submit" disabled={!file}>
-                                Proses Upload
-                            </Button>
-                        </DialogFooter>
-                    </form>
+                    )
                 ) : (
                     <div className="py-6 space-y-4 flex flex-col items-center justify-center text-center">
                         <Loader2 className="h-8 w-8 animate-spin text-primary" />
