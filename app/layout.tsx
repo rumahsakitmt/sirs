@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Inter, Figtree } from "next/font/google";
+import { Geist, Geist_Mono, Figtree } from "next/font/google";
 import { TRPCProvider } from "@/lib/trpc/provider";
+import { Toaster } from "@/components/ui/sonner";
 import { NuqsAdapter } from 'nuqs/adapters/next/app';
 import "./globals.css";
 
@@ -33,6 +34,7 @@ export default function RootLayout({
       >
         <NuqsAdapter>
           <TRPCProvider>{children}</TRPCProvider>
+          <Toaster />
         </NuqsAdapter>
       </body>
     </html>
