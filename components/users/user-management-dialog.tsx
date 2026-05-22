@@ -2,6 +2,17 @@
 
 import { useState, useTransition } from "react";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -11,7 +22,6 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -27,8 +37,11 @@ import {
   assignUserToRoom,
   removeUserFromRoom,
   deleteUser,
+  resetUserPasswordToDefault,
 } from "@/lib/actions";
-import { UserCog, Loader2, Shield, User, Trash2 } from "lucide-react";
+import { DEFAULT_USER_PASSWORD } from "@/lib/user-password";
+import { UserCog, Loader2, Shield, User, Trash2, KeyRound } from "lucide-react";
+import { toast } from "sonner";
 
 interface Room {
   id: string;
@@ -65,6 +78,7 @@ export function UserManagementDialog({
     () => user.rooms.map((r) => r.roomId)
   );
   const [isPending, startTransition] = useTransition();
+  const [isResettingPassword, startResetPasswordTransition] = useTransition();
 
   const isSelf = user.id === currentUserId;
 
@@ -115,11 +129,28 @@ export function UserManagementDialog({
     setOpen(false);
   };
 
+  const handleResetPassword = () => {
+    startResetPasswordTransition(async () => {
+      try {
+        await resetUserPasswordToDefault(user.id);
+        toast.success(
+          `Password ${user.name} direset ke ${DEFAULT_USER_PASSWORD}`
+        );
+      } catch (error) {
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Gagal reset password pengguna"
+        );
+      }
+    });
+  };
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="ghost" size="sm">
-          <UserCog className="h-4 w-4 mr-2" />
+          <UserCog className="mr-2 size-4" />
           Manage
         </Button>
       </DialogTrigger>
@@ -157,13 +188,13 @@ export function UserManagementDialog({
               <SelectContent>
                 <SelectItem value="staff">
                   <div className="flex items-center gap-2">
-                    <User className="h-4 w-4" />
+                    <User className="size-4" />
                     Staff
                   </div>
                 </SelectItem>
                 <SelectItem value="admin">
                   <div className="flex items-center gap-2">
-                    <Shield className="h-4 w-4" />
+                    <Shield className="size-4" />
                     Admin
                   </div>
                 </SelectItem>
@@ -210,29 +241,75 @@ export function UserManagementDialog({
           </div>
         </div>
 
-        <DialogFooter className="flex-col sm:flex-row gap-2">
+        <DialogFooter className="items-stretch gap-2 sm:flex-col sm:items-stretch">
           {!isSelf && (
-            <DeleteConfirmationDialog
-              title="Delete User"
-              description={`Are you sure you want to delete ${user.name}? This will also remove all their reports and cannot be undone.`}
-              onConfirm={handleDelete}
-              trigger={
-                <Button variant="outline" className="text-destructive">
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Delete User
-                </Button>
-              }
-            />
+            <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2">
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="outline" className="w-full justify-center">
+                    <KeyRound className="mr-2 size-4" />
+                    Reset Password
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Reset Password</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Reset password {user.name} ke password default:{" "}
+                      <span className="font-mono font-medium">
+                        {DEFAULT_USER_PASSWORD}
+                      </span>
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel disabled={isResettingPassword}>
+                      Batal
+                    </AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleResetPassword}
+                      disabled={isResettingPassword}
+                    >
+                      {isResettingPassword ? (
+                        <>
+                          <Loader2 className="mr-2 size-4 animate-spin" />
+                          Resetting&hellip;
+                        </>
+                      ) : (
+                        "Reset Password"
+                      )}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+              <DeleteConfirmationDialog
+                title="Delete User"
+                description={`Are you sure you want to delete ${user.name}? This will also remove all their reports and cannot be undone.`}
+                onConfirm={handleDelete}
+                trigger={
+                  <Button
+                    variant="outline"
+                    className="w-full justify-center text-destructive"
+                  >
+                    <Trash2 className="mr-2 size-4" />
+                    Delete User
+                  </Button>
+                }
+              />
+            </div>
           )}
-          <div className="flex gap-2 ml-auto">
-            <Button variant="outline" onClick={() => setOpen(false)}>
+          <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2">
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => setOpen(false)}
+            >
               Cancel
             </Button>
-            <Button onClick={handleSave} disabled={isPending}>
+            <Button className="w-full" onClick={handleSave} disabled={isPending}>
               {isPending ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving...
+                  <Loader2 className="mr-2 size-4 animate-spin" />
+                  Saving&hellip;
                 </>
               ) : (
                 "Save Changes"

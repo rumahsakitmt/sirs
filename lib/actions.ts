@@ -2,10 +2,13 @@
 
 import { db } from "@/lib/db";
 import { room, reportTemplate, report, userRoom, user } from "@/lib/db/schema";
+import { auth } from "@/lib/auth";
+import { DEFAULT_USER_PASSWORD } from "@/lib/user-password";
 import { eq, and, desc, gte, lte, inArray } from "drizzle-orm";
 import type { TemplateSchema } from "@/lib/template-types";
 import { nanoid } from "nanoid";
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { cache } from "react";
 
 // ============================================
@@ -351,6 +354,31 @@ export async function updateUserRole(userId: string, role: "admin" | "staff") {
 
 export async function deleteUser(userId: string) {
   await db.delete(user).where(eq(user.id, userId));
+  revalidatePath("/users");
+}
+
+export async function resetUserPasswordToDefault(userId: string) {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session || session.user.role !== "admin") {
+    throw new Error("Tidak memiliki akses untuk reset kata sandi pengguna");
+  }
+
+  if (session.user.id === userId) {
+    throw new Error("Gunakan menu akun untuk mengubah kata sandi sendiri");
+  }
+
+  await auth.api.setUserPassword({
+    body: {
+      userId,
+      newPassword: DEFAULT_USER_PASSWORD,
+    },
+    headers: await headers(),
+  });
+
+  revalidatePath("/dashboard/users");
   revalidatePath("/users");
 }
 
