@@ -128,6 +128,22 @@ export function DashboardReportForm() {
     setCurrentIndex(0);
   }, []);
 
+  const handleMonthChange = useCallback((month: number) => {
+    setSelectedDate((prev) => {
+      const today = new Date();
+      const year = prev.getFullYear();
+      const maxDay = new Date(year, month, 0).getDate();
+      const isCurrentMonth =
+        year === today.getFullYear() && month === today.getMonth() + 1;
+      const day = isCurrentMonth
+        ? today.getDate()
+        : Math.min(prev.getDate(), maxDay);
+
+      return new Date(year, month - 1, day);
+    });
+    setCurrentIndex(0);
+  }, []);
+
   const handleBackToToday = useCallback(() => {
     setSelectedDate(new Date());
     setCurrentIndex(0);
@@ -160,6 +176,7 @@ export function DashboardReportForm() {
       isViewingToday={isViewingToday}
       periodType={currentPeriodType}
       onDayClick={handleDayClick}
+      onMonthChange={handleMonthChange}
       onBackToToday={handleBackToToday}
     />
   );
