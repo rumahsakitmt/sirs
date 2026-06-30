@@ -16,6 +16,9 @@ const MONTHS = Array.from({ length: 12 }, (_, i) =>
   new Date(2000, i).toLocaleDateString("id-ID", { month: "long" }),
 );
 
+const CURRENT_CALENDAR_YEAR = new Date().getFullYear();
+const YEARS = Array.from({ length: 6 }, (_, i) => CURRENT_CALENDAR_YEAR - i);
+
 interface ActivityHeatmapCardProps {
   reports: Report[];
   currentYear: number;
@@ -24,6 +27,7 @@ interface ActivityHeatmapCardProps {
   isViewingToday: boolean;
   periodType?: PeriodType;
   onDayClick: (date: Date) => void;
+  onYearChange: (year: number) => void;
   onMonthChange: (month: number) => void;
   onBackToToday: () => void;
 }
@@ -36,6 +40,7 @@ export function ActivityHeatmapCard({
   isViewingToday,
   periodType = "daily",
   onDayClick,
+  onYearChange,
   onMonthChange,
   onBackToToday,
 }: ActivityHeatmapCardProps) {
@@ -49,10 +54,26 @@ export function ActivityHeatmapCard({
         </div>
         <div className="flex items-center gap-2">
           {periodType === "daily" && (
-            <Select
-              value={currentMonth.toString()}
-              onValueChange={(v) => onMonthChange(parseInt(v, 10))}
-            >
+            <>
+              <Select
+                value={currentYear.toString()}
+                onValueChange={(v) => onYearChange(parseInt(v, 10))}
+              >
+                <SelectTrigger className="w-[100px] font-sans font-normal">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {YEARS.map((year) => (
+                    <SelectItem key={year} value={year.toString()}>
+                      {year}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select
+                value={currentMonth.toString()}
+                onValueChange={(v) => onMonthChange(parseInt(v, 10))}
+              >
               <SelectTrigger className="w-[160px] font-sans font-normal">
                 <SelectValue />
               </SelectTrigger>
@@ -64,6 +85,7 @@ export function ActivityHeatmapCard({
                 ))}
               </SelectContent>
             </Select>
+            </>
           )}
           {!isViewingToday && (
             <Button
