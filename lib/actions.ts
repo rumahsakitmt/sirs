@@ -314,7 +314,27 @@ export async function updateReport(
 }
 
 export async function deleteReport(id: string) {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session) {
+    throw new Error("Unauthorized");
+  }
+
+  const existing = await getReportById(id);
+  if (!existing) {
+    throw new Error("Report not found");
+  }
+
+  const isAdmin = session.user.role === "admin";
+  if (!isAdmin && existing.report.userId !== session.user.id) {
+    throw new Error("Forbidden");
+  }
+
   await db.delete(report).where(eq(report.id, id));
+  revalidatePath("/dashboard/reports");
+  revalidatePath("/dashboard");
   revalidatePath("/reports");
   revalidatePath("/");
 }

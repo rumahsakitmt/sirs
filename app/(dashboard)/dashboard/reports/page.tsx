@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { ReportActions } from "@/components/reports/report-actions";
 import { ReportListFilters } from "@/components/report-list-filters";
 import {
   Card,
@@ -21,7 +22,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, FileText, Edit, Eye, Printer, BarChart3 } from "lucide-react";
+import { Plus, FileText, BarChart3 } from "lucide-react";
 
 export default async function ReportsPage(
   props: {
@@ -147,25 +148,20 @@ export default async function ReportsPage(
                       : "-"}
                   </TableCell>
                   <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Link href={`/dashboard/reports/${report.id}`}>
-                        <Button variant="ghost" size="icon">
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                      </Link>
-                      {report.status === "draft" && (
-                        <Link href={`/dashboard/reports/${report.id}/edit`}>
-                          <Button variant="ghost" size="icon">
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        </Link>
-                      )}
-                      <Link href={`/dashboard/reports/${report.id}/print`}>
-                        <Button variant="ghost" size="icon">
-                          <Printer className="h-4 w-4" />
-                        </Button>
-                      </Link>
-                    </div>
+                    <ReportActions
+                      reportId={report.id}
+                      status={report.status}
+                      periodLabel={
+                        report.periodDay
+                          ? `${String(report.periodDay).padStart(2, "0")}/${String(report.periodMonth).padStart(2, "0")}/${report.periodYear}`
+                          : `${String(report.periodMonth).padStart(2, "0")}/${report.periodYear}`
+                      }
+                      roomName={report.room?.name || "-"}
+                      templateName={report.template?.name || "-"}
+                      canDelete={
+                        isAdmin || report.user?.id === session.user.id
+                      }
+                    />
                   </TableCell>
                 </TableRow>
               ))}
