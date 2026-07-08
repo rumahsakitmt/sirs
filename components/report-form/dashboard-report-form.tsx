@@ -62,13 +62,14 @@ export function DashboardReportForm() {
   });
 
   const currentItem = allReportsToShow[currentIndex];
-  
+
   // Get period type from current template
   const currentPeriodType = useMemo<PeriodType>(() => {
     if (!currentItem) return "daily";
-    const template = currentItem.type === "existing" 
-      ? currentItem.report?.template 
-      : currentItem.template;
+    const template =
+      currentItem.type === "existing"
+        ? currentItem.report?.template
+        : currentItem.template;
     const pt = template?.periodType;
     if (pt === "daily" || pt === "monthly" || pt === "yearly") return pt;
     return "daily";
@@ -259,7 +260,7 @@ export function DashboardReportForm() {
   }
 
   return (
-    <div className="container mx-auto py-6 p-4 sm:p-0 bg-background rounded-2xl">
+    <div className="mx-auto py-6 p-4 sm:p-0 bg-background rounded-2xl">
       {heatmap}
 
       <ReportNavigator
